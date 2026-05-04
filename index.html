@@ -52,6 +52,13 @@
   .nav-btn:hover{border-color:rgba(201,168,76,0.45);color:var(--accent3);background:rgba(201,168,76,0.06);}
   .nav-btn.active{background:linear-gradient(135deg,#c9a84c,#a07830);color:#000;border-color:transparent;box-shadow:var(--glow);font-weight:900;}
 
+  @media(max-width:600px){
+    .navbar{height:auto;flex-direction:column;align-items:stretch;padding:10px 14px;gap:8px;}
+    .nav-right{justify-content:center;}
+    .nav-buttons{justify-content:center;gap:6px;}
+    .nav-btn{padding:7px 10px;font-size:12px;flex:1;justify-content:center;min-width:0;}
+  }
+
   .gold-line{height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,0.45),transparent);position:relative;z-index:1;}
 
   /* FILTER */
@@ -312,13 +319,12 @@
   ::-webkit-scrollbar-thumb:hover{background:rgba(201,168,76,0.32)}
 
   @media(max-width:768px){
-    .nav-title{font-size:13px}.nav-btn{padding:6px 10px;font-size:12px}
     .stats-row{gap:10px}.main{padding:16px}.navbar{padding:0 14px}.filter-bar{padding:10px 14px}
     .streamers-grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
     .gangs-banner{height:160px}.gangs-banner-title{font-size:20px}.gangs-content{padding:16px}
     .gangs-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}}
   @media(max-width:480px){
-    .nav-btn{padding:5px 8px;font-size:11px;gap:3px}.stat-value{font-size:24px}
+    .stat-value{font-size:24px}
     .streamers-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}}
 </style>
 </head>
@@ -380,14 +386,14 @@
 </div>
 
 <footer class="site-footer">
-  جميع الحقوق محفوظة &copy; <span>Respect Gang System (RM7)</span> 2026
+  جميع الحقوق محفوظة &copy; <span>Respect Gang System</span> 2025
 </footer>
 
 <div class="toast-container" id="toasts"></div>
 
 <!-- GANGS CENTER BTN -->
 <div id="gangs-fab">
-  <button onclick="openGangsPage()">قسم العصابات</button>
+  <button onclick="openGangsPage()">🔫 قسم العصابات</button>
 </div>
 
 <!-- ADMIN FAB -->
@@ -399,7 +405,7 @@
     <div class="gangs-banner-bg"></div>
     <button class="gangs-back-btn" onclick="closeGangsPage()">← رجوع</button>
     <div class="gangs-banner-content">
-      <div class="gangs-banner-icon"></div>
+      <div class="gangs-banner-icon">🔫</div>
       <div class="gangs-banner-title">قسم العصابات</div>
       <div class="gangs-banner-sub">المقرات والأطقم الرسمية</div>
     </div>
@@ -509,7 +515,7 @@
       <button class="btn-primary" style="margin-bottom:14px" onclick="close_('m-admin');open_('m-add')">➕ إضافة ستريمر جديد</button>
 
       <div style="height:1px;background:rgba(201,168,76,0.1);margin:16px 0"></div>
-      <div style="font-size:11px;font-weight:900;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">صور قسم العصابات</div>
+      <div style="font-size:11px;font-weight:900;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">🔫 صور قسم العصابات</div>
       <div class="form-group">
         <label class="form-label">رابط الصورة</label>
         <input class="form-input" id="gi-url" placeholder="https://..." dir="ltr">
@@ -597,7 +603,7 @@ function render(){
     const msg=currentNav==='fav'
       ?'لم تضف أي ستريمر للمفضلة بعد<br><small style="font-size:12px;opacity:0.45">اضغط ☆ على أي ستريمر لإضافته</small>'
       :'لا يوجد ستريمرز في هذا التصنيف';
-    grid.innerHTML=`<div class="empty-state"><div class="empty-icon">${currentNav==='fav'?'⭐':''}</div><div class="empty-text">${msg}</div></div>`;
+    grid.innerHTML=`<div class="empty-state"><div class="empty-icon">${currentNav==='fav'?'⭐':'📭'}</div><div class="empty-text">${msg}</div></div>`;
     return;
   }
   list.forEach((s,i)=>{
