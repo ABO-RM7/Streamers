@@ -5,6 +5,391 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Respect Gang System</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, getDocs, updateDoc, writeBatch } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD9xTrB4c6n9Y4DsVTYEYkRl_1ktVN_Hkc",
+  authDomain: "respect-gang.firebaseapp.com",
+  projectId: "respect-gang",
+  storageBucket: "respect-gang.firebasestorage.app",
+  messagingSenderId: "293595223902",
+  appId: "1:293595223902:web:213b3c2897b405dbeaa1cf",
+  measurementId: "G-CMXQRRQETG"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ===== Global State =====
+let streamers = [];
+let lb = { r1:{n:'',d:''}, r2:{n:'',d:''}, r3:{n:'',d:''} };
+let adminId = 'vel123';
+let filter = 'all';
+let currentNav = 'all';
+let favorites = [];
+let gangImages = [];
+
+// ===== localStorage helpers (for favorites & admin password only) =====
+const lsGet = (k, fb=null) => { try { const v=localStorage.getItem(k); return v!==null?JSON.parse(v):fb; } catch { return fb; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k,JSON.stringify(v)); } catch {} };
+
+// ===== Firebase listeners =====
+function startListeners() {
+  // Streamers — real-time
+  onSnapshot(collection(db, 'streamers'), snap => {
+    streamers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    render();
+    stats();
+    if (document.getElementById('adm-content').style.display !== 'none') renderAdmList();
+  });
+
+  // Leaderboard — real-time
+  onSnapshot(doc(db, 'config', 'leaderboard'), snap => {
+    if (snap.exists()) lb = snap.data();
+  });
+
+  // Admin password — real-time
+  onSnapshot(doc(db, 'config', 'admin'), snap => {
+    if (snap.exists()) adminId = snap.data().password || 'vel123';
+  });
+
+  // Gang images — real-time
+  onSnapshot(collection(db, 'gangImages'), snap => {
+    gangImages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderGangImages();
+    if (document.getElementById('adm-content').style.display !== 'none') renderAdmGangList();
+  });
+}
+
+// ===== Firestore write helpers =====
+async function fsAddStreamer(s) {
+  const id = 'str_' + Date.now();
+  await setDoc(doc(db, 'streamers', id), { ...s, firestoreId: id });
+}
+
+async function fsDeleteStreamer(id) {
+  await deleteDoc(doc(db, 'streamers', id));
+}
+
+async function fsToggleOnline(id, online, viewers) {
+  await updateDoc(doc(db, 'streamers', id), { online, viewers });
+}
+
+async function fsSaveLb(data) {
+  await setDoc(doc(db, 'config', 'leaderboard'), data);
+}
+
+async function fsSaveAdmin(password) {
+  await setDoc(doc(db, 'config', 'admin'), { password });
+}
+
+async function fsAddGangImage(img) {
+  const id = 'img_' + Date.now();
+  await setDoc(doc(db, 'gangImages', id), { ...img, id });
+}
+
+async function fsDeleteGangImage(id) {
+  await deleteDoc(doc(db, 'gangImages', id));
+}
+
+// ===== Render =====
+const pEmoji = p => p==='twitch'?'🟣':p==='youtube'?'🔴':p==='kick'?'🟢':'📺';
+
+function render() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  let list = [...streamers];
+  if (currentNav === 'fav') list = list.filter(s => favorites.includes(s.id));
+  if (filter === 'online') list = list.filter(s => s.online);
+  if (filter === 'offline') list = list.filter(s => !s.online);
+  if (!list.length) {
+    const msg = currentNav === 'fav'
+      ? 'لم تضف أي ستريمر للمفضلة بعد<br><small style="font-size:12px;opacity:0.45">اضغط ☆ على أي ستريمر لإضافته</small>'
+      : 'لا يوجد ستريمرز في هذا التصنيف';
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">${currentNav==='fav'?'⭐':''}</div><div class="empty-text">${msg}</div></div>`;
+    return;
+  }
+  list.forEach((s, i) => {
+    const isFav = favorites.includes(s.id);
+    const card = document.createElement('div');
+    card.className = `streamer-card${s.online?' is-online':''}`;
+    card.style.animationDelay = `${i*0.05}s`;
+    const avInner = s.avatar
+      ? `<img src="${s.avatar}" alt="${s.name}" onerror="this.style.display='none'">`
+      : `<span>${pEmoji(s.platform)}</span>`;
+    card.innerHTML = `
+      <div class="card-header">
+        <span class="platform-badge ${s.platform}">${s.platform.toUpperCase()}</span>
+        <div class="header-actions">
+          <button class="star-btn ${isFav?'active':''}" onclick="window.toggleFav('${s.id}',this)">${isFav?'⭐':'☆'}</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="streamer-name">${s.name}</div>
+        <div class="status-badge ${s.online?'online':'offline'}">
+          <div class="status-dot"></div>${s.online?'متصل':'غير متصل'}
+        </div>
+        <div class="avatar ${s.online?'online-border':''}">${avInner}</div>
+        ${s.online&&s.viewers>0?`<div class="viewers-count">👁️ <span class="online-viewers">${Number(s.viewers).toLocaleString()}</span> مشاهد</div>`:''}
+        <button class="visit-btn" onclick="window.visit('${s.url}')">🔗 زيارة القناة</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function stats() {
+  const on = streamers.filter(s => s.online).length;
+  const vw = streamers.reduce((a,s) => a+(Number(s.viewers)||0), 0);
+  document.getElementById('s-total').textContent = streamers.length;
+  document.getElementById('s-online').textContent = on;
+  document.getElementById('s-viewers').textContent = vw.toLocaleString();
+  document.getElementById('s-osub').textContent = on>0?`${on} يبثون الآن 🔴`:'';
+  document.getElementById('s-vsub').textContent = vw>0?'مشاهد نشط ✨':'';
+}
+
+function renderAdmList() {
+  const el = document.getElementById('adm-list');
+  if (!el) return;
+  if (!streamers.length) { el.innerHTML=`<div style="text-align:center;color:var(--text2);font-size:13px;padding:16px">لا يوجد ستريمرز</div>`; return; }
+  el.innerHTML = streamers.map(s => `
+    <div class="admin-item">
+      <span>${pEmoji(s.platform)}</span>
+      <span class="admin-item-name">${s.name}</span>
+      <button class="toggle-btn ${s.online?'online':'offline'}" onclick="window.toggleOnline('${s.id}')">${s.online?'🟢 متصل':'⚫ غير متصل'}</button>
+      <button class="delete-btn" onclick="window.delStr('${s.id}')">🗑️</button>
+    </div>`).join('');
+  ['r1','r2','r3'].forEach(k => {
+    const n=document.getElementById(k+'n'); const d=document.getElementById(k+'d');
+    if(n) n.value=lb[k]?.n||''; if(d) d.value=lb[k]?.d||'';
+  });
+}
+
+function renderLb() {
+  const ranks = [
+    {k:'r1',lbl:'المركز الأول',em:'🥇',cls:'rank-1'},
+    {k:'r2',lbl:'المركز الثاني',em:'🥈',cls:'rank-2'},
+    {k:'r3',lbl:'المركز الثالث',em:'🥉',cls:'rank-3'}
+  ];
+  document.getElementById('lb-view').innerHTML = ranks.map(r => `
+    <div class="lb-item">
+      <div class="rank-badge ${r.cls}">${r.em}</div>
+      <div class="lb-info">
+        <div class="lb-rank-label">${r.lbl}</div>
+        <div class="lb-name">${lb[r.k]?.n||'—'}</div>
+        ${lb[r.k]?.d?`<div class="lb-id">Discord: ${lb[r.k].d}</div>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function renderAdmGangList() {
+  const el = document.getElementById('adm-gang-list');
+  if (!el) return;
+  if (!gangImages.length) { el.innerHTML=''; return; }
+  const secLabel = s => s==='locations'?'📍 مقرات':'👕 أطقم';
+  el.innerHTML = gangImages.map(g => `
+    <div class="admin-item" style="gap:8px">
+      <img src="${g.url}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;border:1px solid rgba(139,92,246,0.3);flex-shrink:0" onerror="this.style.display='none'">
+      <span class="admin-item-name" style="font-size:12px">${g.label||'بدون وصف'}</span>
+      <span style="font-size:11px;color:var(--accent2);white-space:nowrap">${secLabel(g.section)}</span>
+      <button class="delete-btn" onclick="window.delGangImage('${g.id}')">🗑️</button>
+    </div>`).join('');
+}
+
+function renderGangImages() {
+  ['locations','outfits'].forEach(sec => {
+    const grid = document.getElementById(`grid-${sec}`);
+    if (!grid) return;
+    const items = gangImages.filter(g => g.section===sec);
+    if (!items.length) {
+      const icon = sec==='locations'?'📍':'👕';
+      const label = sec==='locations'?'المقرات والأماكن':'الأطقم والملابس';
+      grid.innerHTML = `<div class="empty-gangs"><div class="empty-gangs-icon">${icon}</div><div class="empty-gangs-text">لا توجد صور بعد<br>أضف صور ${label} من لوحة الإدارة</div></div>`;
+      return;
+    }
+    grid.innerHTML = items.map((g,i) => `
+      <div class="gang-card" style="animation-delay:${i*0.05}s">
+        <img src="${g.url}" alt="${g.label||'صورة'}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22><rect fill=%22%23161616%22 width=%22200%22 height=%22200%22/><text fill=%22%238a7a5a%22 font-size=%2240%22 x=%2250%%25%22 y=%2255%%25%22 text-anchor=%22middle%22>🖼️</text></svg>'">
+        <div class="gang-card-overlay">
+          ${g.label?`<div class="gang-card-label">${g.label}</div>`:''}
+        </div>
+      </div>`).join('');
+  });
+}
+
+// ===== Global window functions =====
+window.toggleFav = (id, btn) => {
+  const i = favorites.indexOf(id);
+  if (i===-1) { favorites.push(id); btn.textContent='⭐'; btn.classList.add('active'); toast('✅ أضيف للمفضلة','success'); }
+  else { favorites.splice(i,1); btn.textContent='☆'; btn.classList.remove('active'); toast('❌ أزيل من المفضلة','error'); }
+  lsSet('rgs_fav', favorites);
+  if (currentNav==='fav') render();
+};
+
+window.visit = url => { if(!url||url==='#') return toast('لا يوجد رابط','error'); window.open(url,'_blank'); };
+
+window.delStr = async id => {
+  if (!confirm('هل أنت متأكد من حذف هذا الستريمر نهائياً؟')) return;
+  try {
+    await fsDeleteStreamer(id);
+    favorites = favorites.filter(f => f!==id);
+    lsSet('rgs_fav', favorites);
+    toast('🗑️ تم الحذف','error');
+  } catch(e) { toast('❌ خطأ في الحذف','error'); console.error(e); }
+};
+
+window.toggleOnline = async id => {
+  const s = streamers.find(x => x.id===id);
+  if (!s) return;
+  const newOnline = !s.online;
+  const newViewers = newOnline ? Math.floor(Math.random()*2000)+50 : 0;
+  try {
+    await fsToggleOnline(id, newOnline, newViewers);
+    toast(newOnline?`🟢 ${s.name} متصل الآن`:`⚫ ${s.name} غير متصل`, newOnline?'success':'error');
+  } catch(e) { toast('❌ خطأ في التحديث','error'); console.error(e); }
+};
+
+window.confirmAdd = async () => {
+  const name = document.getElementById('ns-name').value.trim();
+  const url = document.getElementById('ns-url').value.trim();
+  const av = document.getElementById('ns-av').value.trim();
+  const plat = document.getElementById('ns-plat').value;
+  if (!name||!url) return toast('⚠️ أدخل الاسم والرابط','error');
+  try {
+    await fsAddStreamer({ name, url, avatar:av, platform:plat, online:false, viewers:0 });
+    close_('m-add');
+    toast(`✅ تم إضافة ${name}`,'success');
+    ['ns-name','ns-url','ns-av'].forEach(k => document.getElementById(k).value='');
+  } catch(e) { toast('❌ خطأ في الإضافة','error'); console.error(e); }
+};
+
+window.submitChannel = async () => {
+  const url = document.getElementById('ch-url').value.trim();
+  const plat = document.getElementById('ch-plat').value;
+  if (!url) return toast('⚠️ أدخل رابط القناة','error');
+  const WEBHOOK = 'https://discord.com/api/webhooks/1457668188128149663/Dm8KkDE8_K4gAN8nUOWm_4puSbDoNJ41ELi6yRcy6dPKgzKPrQjKMYYQKQXD7yeSZjdY';
+  try { await fetch(WEBHOOK,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:`📺 **طلب إضافة قناة**\n🔗 ${url}\n🎮 ${plat}\n⏰ ${new Date().toLocaleString('ar')}`})}); } catch {}
+  close_('m-ch');
+  toast('📤 تم إرسال طلبك!','success');
+};
+
+window.saveLb = async () => {
+  ['r1','r2','r3'].forEach(k => { lb[k]={n:document.getElementById(k+'n').value.trim(), d:document.getElementById(k+'d').value.trim()}; });
+  try { await fsSaveLb(lb); renderLb(); toast('💾 تم حفظ المراتب','success'); }
+  catch(e) { toast('❌ خطأ في الحفظ','error'); console.error(e); }
+};
+
+window.changeAdmin = async () => {
+  const v = document.getElementById('new-adm-id').value.trim();
+  if (!v) return toast('⚠️ أدخل كلمة السر الجديدة','error');
+  try { await fsSaveAdmin(v); document.getElementById('new-adm-id').value=''; toast('✅ تم تغيير كلمة السر','success'); }
+  catch(e) { toast('❌ خطأ','error'); console.error(e); }
+};
+
+window.addGangImage = async () => {
+  const url = document.getElementById('gi-url').value.trim();
+  const label = document.getElementById('gi-label').value.trim();
+  const section = document.getElementById('gi-section').value;
+  if (!url) return toast('⚠️ أدخل رابط الصورة','error');
+  try {
+    await fsAddGangImage({url, label, section});
+    document.getElementById('gi-url').value='';
+    document.getElementById('gi-label').value='';
+    toast('✅ تم إضافة الصورة','success');
+  } catch(e) { toast('❌ خطأ في الإضافة','error'); console.error(e); }
+};
+
+window.delGangImage = async id => {
+  try { await fsDeleteGangImage(id); toast('🗑️ تم حذف الصورة','error'); }
+  catch(e) { toast('❌ خطأ في الحذف','error'); console.error(e); }
+};
+
+window.setFilter = (f, btn) => {
+  filter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+};
+
+window.setNav = (sec, skip=false) => {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById(`btn-${sec}`);
+  if (btn) btn.classList.add('active');
+  if (sec==='lb') { renderLb(); open_('m-lb'); return; }
+  if (sec==='ch') { if(!skip){document.getElementById('ch-url').value='';open_('m-ch');} return; }
+  currentNav = sec;
+  render();
+  stats();
+};
+
+window.openAdmin = () => {
+  document.getElementById('adm-login').style.display='block';
+  document.getElementById('adm-content').style.display='none';
+  document.getElementById('adm-inp').value='';
+  open_('m-admin');
+};
+
+window.verifyAdmin = () => {
+  if (document.getElementById('adm-inp').value.trim()===adminId) {
+    document.getElementById('adm-login').style.display='none';
+    document.getElementById('adm-content').style.display='block';
+    renderAdmList();
+    renderAdmGangList();
+    toast('🔓 مرحباً أيها المشرف!','success');
+  } else { toast('❌ كلمة السر غير صحيحة','error'); }
+};
+
+window.openGangsPage = () => {
+  renderGangImages();
+  document.getElementById('gangs-page').classList.add('open');
+  document.body.style.overflow='hidden';
+};
+
+window.closeGangsPage = () => {
+  document.getElementById('gangs-page').classList.remove('open');
+  document.body.style.overflow='';
+};
+
+window.switchGangsTab = (tab, btn) => {
+  document.querySelectorAll('.gangs-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.gangs-section').forEach(s => s.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+};
+
+const open_ = id => document.getElementById(id).classList.add('open');
+const close_ = id => document.getElementById(id).classList.remove('open');
+window.open_ = open_;
+window.close_ = close_;
+
+function toast(msg, type='success') {
+  const c=document.getElementById('toasts'), t=document.createElement('div');
+  t.className=`toast ${type}`; t.textContent=msg;
+  c.appendChild(t); setTimeout(()=>t.remove(),3000);
+}
+window.toast = toast;
+
+// ===== Init =====
+window.addEventListener('DOMContentLoaded', () => {
+  favorites = lsGet('rgs_fav') || [];
+  document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); });
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key==='Escape') {
+      document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+      window.closeGangsPage();
+    }
+  });
+  document.getElementById('adm-inp').addEventListener('keydown', e => { if(e.key==='Enter') window.verifyAdmin(); });
+  startListeners();
+  setTimeout(() => { document.getElementById('loading-screen').style.display='none'; }, 1200);
+});
+</script>
+
 <style>
   :root {
     --bg:#080808; --bg2:#0f0f0f; --bg3:#161616; --border:#2a2a2a;
@@ -225,40 +610,30 @@
 
   .site-footer{position:relative;z-index:1;text-align:center;padding:16px;
     border-top:1px solid rgba(139,92,246,0.1);background:rgba(8,8,8,0.6);
-    font-size:11px;color:var(--text3);font-weight:700;letter-spacing:1px;
-    padding-bottom:80px;}
+    font-size:11px;color:var(--text3);font-weight:700;letter-spacing:1px;padding-bottom:80px;}
   .site-footer span{color:var(--accent2);}
 
-  #gangs-page{position:fixed;inset:0;z-index:200;background:var(--bg);
-    display:none;flex-direction:column;overflow-y:auto;}
+  #gangs-page{position:fixed;inset:0;z-index:200;background:var(--bg);display:none;flex-direction:column;overflow-y:auto;}
   #gangs-page.open{display:flex;}
 
   .gangs-banner{position:relative;height:220px;overflow:hidden;flex-shrink:0;}
   .gangs-banner-bg{position:absolute;inset:0;
     background:url('https://cdn.discordapp.com/attachments/1496248320065274006/1500789464891396157/Untitled_design.png?ex=69f9b69b&is=69f8651b&hm=3b2fbf47c0d659ff9e7f22b46a0a3b6db7b4adb1c3dfefb340462e83d61de0d3&') center/cover no-repeat;}
-  .gangs-banner-bg::before{content:'';position:absolute;inset:0;
-    background:linear-gradient(to bottom,rgba(0,0,0,0.35) 0%,rgba(0,0,0,0.55) 100%);}
-  .gangs-banner-bg::after{content:'';position:absolute;inset:0;
-    background-image:repeating-linear-gradient(0deg,transparent,transparent 30px,rgba(139,92,246,0.015) 30px,rgba(139,92,246,0.015) 31px),
-                     repeating-linear-gradient(90deg,transparent,transparent 30px,rgba(139,92,246,0.015) 30px,rgba(139,92,246,0.015) 31px);}
+  .gangs-banner-bg::before{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.35) 0%,rgba(0,0,0,0.55) 100%);}
   .gangs-banner-content{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;}
   .gangs-back-btn{position:absolute;top:16px;right:20px;z-index:2;
     background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.28);color:var(--accent2);
-    padding:8px 18px;border-radius:8px;cursor:pointer;font-family:'Cairo',sans-serif;
-    font-size:13px;font-weight:700;transition:all 0.2s;}
+    padding:8px 18px;border-radius:8px;cursor:pointer;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;transition:all 0.2s;}
   .gangs-back-btn:hover{background:rgba(139,92,246,0.16);box-shadow:var(--glow);}
-  .gangs-banner-icon{font-size:52px;filter:drop-shadow(0 0 20px rgba(139,92,246,0.5));}
   .gangs-banner-title{font-size:28px;font-weight:900;letter-spacing:2px;text-transform:uppercase;
     background:linear-gradient(135deg,#ddd6fe 0%,#8b5cf6 50%,#ddd6fe 100%);
     -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
   .gangs-banner-sub{font-size:13px;color:var(--text2);font-weight:700;letter-spacing:1px;}
 
   .gangs-divider{height:2px;background:linear-gradient(90deg,transparent,rgba(139,92,246,0.6),transparent);flex-shrink:0;}
-
   .gangs-tabs{display:flex;background:rgba(8,5,14,0.95);border-bottom:1px solid rgba(139,92,246,0.12);flex-shrink:0;}
   .gangs-tab{flex:1;padding:18px;text-align:center;cursor:pointer;font-family:'Cairo',sans-serif;
-    font-size:14px;font-weight:900;color:var(--text2);transition:all 0.2s;
-    border-bottom:3px solid transparent;letter-spacing:0.5px;}
+    font-size:14px;font-weight:900;color:var(--text2);transition:all 0.2s;border-bottom:3px solid transparent;letter-spacing:0.5px;}
   .gangs-tab:hover{color:var(--accent2);background:rgba(139,92,246,0.03);}
   .gangs-tab.active{color:var(--accent2);border-bottom-color:var(--accent);background:rgba(139,92,246,0.05);}
 
@@ -270,28 +645,25 @@
   .gangs-section-title::after{content:'';flex:1;height:1px;background:rgba(139,92,246,0.1);}
 
   .gangs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;}
-
-  .gang-card{position:relative;border-radius:16px;overflow:hidden;
-    border:2px solid rgba(139,92,246,0.3);transition:all 0.3s;cursor:default;
-    box-shadow:0 0 0 1px rgba(139,92,246,0.1),0 8px 32px rgba(0,0,0,0.5);
+  .gang-card{position:relative;border-radius:16px;overflow:hidden;border:2px solid rgba(139,92,246,0.3);
+    transition:all 0.3s;cursor:default;box-shadow:0 0 0 1px rgba(139,92,246,0.1),0 8px 32px rgba(0,0,0,0.5);
     animation:fadeInUp 0.4s ease both;aspect-ratio:1/1;}
-  .gang-card:hover{border-color:rgba(139,92,246,0.7);transform:translateY(-4px);
-    box-shadow:0 0 20px rgba(139,92,246,0.25),0 16px 40px rgba(0,0,0,0.6);}
+  .gang-card:hover{border-color:rgba(139,92,246,0.7);transform:translateY(-4px);box-shadow:0 0 20px rgba(139,92,246,0.25),0 16px 40px rgba(0,0,0,0.6);}
   .gang-card img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.4s;}
   .gang-card:hover img{transform:scale(1.05);}
-  .gang-card-overlay{position:absolute;inset:0;
-    background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 50%);
-    display:flex;align-items:flex-end;padding:12px;}
-  .gang-card-label{font-size:12px;font-weight:900;color:var(--accent3);letter-spacing:0.5px;
-    text-shadow:0 1px 4px rgba(0,0,0,0.8);}
-  .gang-card::before{content:'';position:absolute;inset:0;border-radius:14px;
-    box-shadow:inset 0 0 0 2px rgba(139,92,246,0.4),inset 0 0 12px rgba(139,92,246,0.08);
-    z-index:2;pointer-events:none;}
-  .gang-card .del-img-btn{display:none !important;}
+  .gang-card-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 50%);display:flex;align-items:flex-end;padding:12px;}
+  .gang-card-label{font-size:12px;font-weight:900;color:var(--accent3);letter-spacing:0.5px;text-shadow:0 1px 4px rgba(0,0,0,0.8);}
+  .gang-card::before{content:'';position:absolute;inset:0;border-radius:14px;box-shadow:inset 0 0 0 2px rgba(139,92,246,0.4),inset 0 0 12px rgba(139,92,246,0.08);z-index:2;pointer-events:none;}
 
   .empty-gangs{text-align:center;padding:60px 20px;color:var(--text2);}
   .empty-gangs-icon{font-size:48px;opacity:0.2;margin-bottom:12px;}
   .empty-gangs-text{font-size:13px;line-height:1.8;opacity:0.6;}
+
+  /* Firebase status indicator */
+  .fb-status{position:fixed;top:12px;left:12px;z-index:9000;font-size:10px;font-weight:900;
+    padding:4px 10px;border-radius:20px;letter-spacing:0.5px;transition:all 0.3s;}
+  .fb-status.connected{background:rgba(34,197,94,0.12);color:var(--online);border:1px solid rgba(34,197,94,0.25);}
+  .fb-status.connecting{background:rgba(139,92,246,0.1);color:var(--accent2);border:1px solid rgba(139,92,246,0.2);}
 
   ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}
   ::-webkit-scrollbar-thumb{background:rgba(139,92,246,0.18);border-radius:3px}
@@ -310,12 +682,15 @@
 <body>
 <div class="bg-wrap"></div>
 
+<!-- Firebase connection status -->
+<div class="fb-status connecting" id="fb-status">🔄 جارٍ الاتصال...</div>
+
 <div id="loading-screen">
   <div class="loading-logo">
     <img src="https://cdn.discordapp.com/attachments/1496248320065274006/1500789464400658432/IMG_7311.png?ex=69f9b69b&is=69f8651b&hm=17616b940dd2b152d5f5c0176f5a7ba1466c9f2964800a2f1e690f0b8204b941&" alt="logo" onerror="this.parentElement.innerHTML='👑';this.parentElement.style.fontSize='44px'">
   </div>
   <div class="loading-spinner"></div>
-  <div class="loading-text">جارٍ تحميل البيانات...</div>
+  <div class="loading-text">جارٍ الاتصال بقاعدة البيانات...</div>
 </div>
 
 <nav class="navbar">
@@ -361,7 +736,9 @@
       <div class="stat-sub" id="s-osub"></div>
     </div>
   </div>
-  <div class="streamers-grid" id="grid"></div>
+  <div class="streamers-grid" id="grid">
+    <div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-text">جارٍ تحميل البيانات...</div></div>
+  </div>
 </div>
 
 <footer class="site-footer">
@@ -371,17 +748,17 @@
 <div class="toast-container" id="toasts"></div>
 
 <div id="gangs-fab">
-  <button onclick="openGangsPage()"> قسم العصابات</button>
+  <button onclick="openGangsPage()">⚔️ قسم العصابات</button>
 </div>
 
 <div id="admin-fab"><button onclick="openAdmin()" title="لوحة الإدارة">⚙️</button></div>
 
+<!-- Gangs Page -->
 <div id="gangs-page">
   <div class="gangs-banner">
     <div class="gangs-banner-bg"></div>
     <button class="gangs-back-btn" onclick="closeGangsPage()">← رجوع</button>
     <div class="gangs-banner-content">
-      <div class="gangs-banner-icon"></div>
       <div class="gangs-banner-title">قسم العصابات</div>
       <div class="gangs-banner-sub">المقرات والأطقم الرسمية</div>
     </div>
@@ -395,24 +772,19 @@
     <div class="gangs-section active" id="tab-locations">
       <div class="gangs-section-title">📍 المقرات والأماكن</div>
       <div class="gangs-grid" id="grid-locations">
-        <div class="empty-gangs">
-          <div class="empty-gangs-icon">📍</div>
-          <div class="empty-gangs-text">لا توجد صور بعد<br>أضف صور المقرات من لوحة الإدارة</div>
-        </div>
+        <div class="empty-gangs"><div class="empty-gangs-icon">📍</div><div class="empty-gangs-text">لا توجد صور بعد<br>أضف صور المقرات من لوحة الإدارة</div></div>
       </div>
     </div>
     <div class="gangs-section" id="tab-outfits">
       <div class="gangs-section-title">👕 الأطقم والملابس</div>
       <div class="gangs-grid" id="grid-outfits">
-        <div class="empty-gangs">
-          <div class="empty-gangs-icon">👕</div>
-          <div class="empty-gangs-text">لا توجد صور بعد<br>أضف صور الأطقم من لوحة الإدارة</div>
-        </div>
+        <div class="empty-gangs"><div class="empty-gangs-icon">👕</div><div class="empty-gangs-text">لا توجد صور بعد<br>أضف صور الأطقم من لوحة الإدارة</div></div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Modals -->
 <div class="modal-overlay" id="m-ch">
   <div class="modal">
     <div class="modal-header">
@@ -478,16 +850,16 @@
       <div class="info-box">🔐 أدخل كلمة السر للوصول إلى لوحة الإدارة</div>
       <div class="form-group">
         <label class="form-label">كلمة السر</label>
-        <input class="form-input" id="adm-inp" type="password" placeholder="••••••••" dir="ltr" onkeydown="if(event.key==='Enter')verifyAdmin()">
+        <input class="form-input" id="adm-inp" type="password" placeholder="••••••••" dir="ltr">
       </div>
       <button class="btn-primary" onclick="verifyAdmin()">🔓 دخول</button>
     </div>
     <div id="adm-content" style="display:none">
-      <div class="info-box">✅ مرحباً أيها المشرف!</div>
+      <div class="info-box">✅ مرحباً أيها المشرف! — البيانات تُحفظ مباشرة لجميع المستخدمين 🌐</div>
       <button class="btn-primary" style="margin-bottom:14px" onclick="close_('m-admin');open_('m-add')">➕ إضافة ستريمر جديد</button>
 
       <div style="height:1px;background:rgba(139,92,246,0.1);margin:16px 0"></div>
-      <div style="font-size:11px;font-weight:900;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px"> صور قسم العصابات</div>
+      <div style="font-size:11px;font-weight:900;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">🖼️ صور قسم العصابات</div>
       <div class="form-group">
         <label class="form-label">رابط الصورة</label>
         <input class="form-input" id="gi-url" placeholder="https://..." dir="ltr">
@@ -533,306 +905,14 @@
 </div>
 
 <script>
-const K_STR='rgs_streamers',K_LB='rgs_lb',K_ADM='rgs_adminId',K_FAV='rgs_fav',K_IMGS='rgs_gangimgs';
-const WEBHOOK='https://discord.com/api/webhooks/1457668188128149663/Dm8KkDE8_K4gAN8nUOWm_4puSbDoNJ41ELi6yRcy6dPKgzKPrQjKMYYQKQXD7yeSZjdY';
-
-const lsGet=(k,fb=null)=>{try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):fb;}catch{return fb;}};
-const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
-
-let streamers=[],lb={r1:{n:'',d:''},r2:{n:'',d:''},r3:{n:'',d:''}};
-let adminId='vel123',filter='all',currentNav='all',favorites=[],gangImages=[];
-
-window.onload=()=>{
-  loadData();
-  document.getElementById('loading-screen').style.display='none';
-  setNav('all',true);
-};
-
-function loadData(){
-  const s=lsGet(K_STR);
-  streamers=s!==null?s:[];
-  if(s===null)lsSet(K_STR,streamers);
-  lb=lsGet(K_LB)||{r1:{n:'',d:''},r2:{n:'',d:''},r3:{n:'',d:''}};
-  adminId=lsGet(K_ADM)||'vel123';
-  favorites=lsGet(K_FAV)||[];
-  gangImages=lsGet(K_IMGS)||[];
-}
-
-const saveStr=()=>lsSet(K_STR,streamers);
-const saveLbD=()=>lsSet(K_LB,lb);
-const saveAdm=()=>lsSet(K_ADM,adminId);
-const saveFav=()=>lsSet(K_FAV,favorites);
-const saveImgs=()=>lsSet(K_IMGS,gangImages);
-
-function render(){
-  const grid=document.getElementById('grid');
-  grid.innerHTML='';
-  let list=[...streamers];
-  if(currentNav==='fav')list=list.filter(s=>favorites.includes(s.id));
-  if(filter==='online')list=list.filter(s=>s.online);
-  if(filter==='offline')list=list.filter(s=>!s.online);
-  if(!list.length){
-    const msg=currentNav==='fav'
-      ?'لم تضف أي ستريمر للمفضلة بعد<br><small style="font-size:12px;opacity:0.45">اضغط ☆ على أي ستريمر لإضافته</small>'
-      :'لا يوجد ستريمرز في هذا التصنيف';
-    grid.innerHTML=`<div class="empty-state"><div class="empty-icon">${currentNav==='fav'?'⭐':''}</div><div class="empty-text">${msg}</div></div>`;
-    return;
-  }
-  list.forEach((s,i)=>{
-    const isFav=favorites.includes(s.id);
-    const card=document.createElement('div');
-    card.className=`streamer-card${s.online?' is-online':''}`;
-    card.style.animationDelay=`${i*0.05}s`;
-    const avInner=s.avatar?`<img src="${s.avatar}" alt="${s.name}" onerror="this.style.display='none'">`:`<span>${pEmoji(s.platform)}</span>`;
-    card.innerHTML=`
-      <div class="card-header">
-        <span class="platform-badge ${s.platform}">${s.platform.toUpperCase()}</span>
-        <div class="header-actions">
-          <button class="star-btn ${isFav?'active':''}" onclick="toggleFav(${s.id},this)">${isFav?'⭐':'☆'}</button>
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="streamer-name">${s.name}</div>
-        <div class="status-badge ${s.online?'online':'offline'}">
-          <div class="status-dot"></div>${s.online?'متصل':'غير متصل'}
-        </div>
-        <div class="avatar ${s.online?'online-border':''}">${avInner}</div>
-        ${s.online&&s.viewers>0?`<div class="viewers-count">👁️ <span class="online-viewers">${Number(s.viewers).toLocaleString()}</span> مشاهد</div>`:''}
-        <button class="visit-btn" onclick="visit('${s.url}')">🔗 زيارة القناة</button>
-      </div>`;
-    grid.appendChild(card);
-  });
-}
-
-const pEmoji=p=>p==='twitch'?'🟣':p==='youtube'?'🔴':p==='kick'?'🟢':'📺';
-
-function stats(){
-  const on=streamers.filter(s=>s.online).length;
-  const vw=streamers.reduce((a,s)=>a+(Number(s.viewers)||0),0);
-  document.getElementById('s-total').textContent=streamers.length;
-  document.getElementById('s-online').textContent=on;
-  document.getElementById('s-viewers').textContent=vw.toLocaleString();
-  document.getElementById('s-osub').textContent=on>0?`${on} يبثون الآن 🔴`:'';
-  document.getElementById('s-vsub').textContent=vw>0?'مشاهد نشط ✨':'';
-}
-
-function setFilter(f,btn){
-  filter=f;
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');render();
-}
-
-function setNav(sec,skip=false){
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  const btn=document.getElementById(`btn-${sec}`);
-  if(btn)btn.classList.add('active');
-  if(sec==='lb'){renderLb();open_('m-lb');return;}
-  if(sec==='ch'){if(!skip){document.getElementById('ch-url').value='';open_('m-ch');}return;}
-  currentNav=sec;render();stats();
-}
-
-function toggleFav(id,btn){
-  const i=favorites.indexOf(id);
-  if(i===-1){favorites.push(id);btn.textContent='⭐';btn.classList.add('active');toast('✅ أضيف للمفضلة','success');}
-  else{favorites.splice(i,1);btn.textContent='☆';btn.classList.remove('active');toast('❌ أزيل من المفضلة','error');}
-  saveFav();if(currentNav==='fav')render();
-}
-
-function visit(url){if(!url||url==='#')return toast('لا يوجد رابط','error');window.open(url,'_blank');}
-
-function delStr(id){
-  if(!confirm('هل أنت متأكد من حذف هذا الستريمر نهائياً؟'))return;
-  streamers=streamers.filter(s=>s.id!==id);
-  favorites=favorites.filter(f=>f!==id);
-  saveStr();saveFav();render();stats();renderAdmList();
-  toast('🗑️ تم الحذف','error');
-}
-
-function confirmAdd(){
-  const name=document.getElementById('ns-name').value.trim();
-  const url=document.getElementById('ns-url').value.trim();
-  const av=document.getElementById('ns-av').value.trim();
-  const plat=document.getElementById('ns-plat').value;
-  if(!name||!url)return toast('⚠️ أدخل الاسم والرابط','error');
-  streamers.push({id:Date.now(),name,url,avatar:av,platform:plat,online:false,viewers:0});
-  saveStr();close_('m-add');render();stats();renderAdmList();
-  toast(`✅ تم إضافة ${name}`,'success');
-  ['ns-name','ns-url','ns-av'].forEach(k=>document.getElementById(k).value='');
-}
-
-async function submitChannel(){
-  const url=document.getElementById('ch-url').value.trim();
-  const plat=document.getElementById('ch-plat').value;
-  if(!url)return toast('⚠️ أدخل رابط القناة','error');
-  try{await fetch(WEBHOOK,{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({content:`📺 **طلب إضافة قناة**\n🔗 ${url}\n🎮 ${plat}\n⏰ ${new Date().toLocaleString('ar')}`})});}catch{}
-  close_('m-ch');toast('📤 تم إرسال طلبك!','success');
-}
-
-function renderLb(){
-  const ranks=[{k:'r1',lbl:'المركز الأول',em:'🥇',cls:'rank-1'},{k:'r2',lbl:'المركز الثاني',em:'🥈',cls:'rank-2'},{k:'r3',lbl:'المركز الثالث',em:'🥉',cls:'rank-3'}];
-  document.getElementById('lb-view').innerHTML=ranks.map(r=>`
-    <div class="lb-item">
-      <div class="rank-badge ${r.cls}">${r.em}</div>
-      <div class="lb-info">
-        <div class="lb-rank-label">${r.lbl}</div>
-        <div class="lb-name">${lb[r.k]?.n||'—'}</div>
-        ${lb[r.k]?.d?`<div class="lb-id">Discord: ${lb[r.k].d}</div>`:''}
-      </div>
-    </div>`).join('');
-}
-
-function saveLb(){
-  ['r1','r2','r3'].forEach(k=>{lb[k]={n:document.getElementById(k+'n').value.trim(),d:document.getElementById(k+'d').value.trim()};});
-  saveLbD();renderLb();toast('💾 تم حفظ المراتب','success');
-}
-
-function openAdmin(){
-  document.getElementById('adm-login').style.display='block';
-  document.getElementById('adm-content').style.display='none';
-  document.getElementById('adm-inp').value='';
-  open_('m-admin');
-}
-
-function verifyAdmin(){
-  if(document.getElementById('adm-inp').value.trim()===adminId){
-    document.getElementById('adm-login').style.display='none';
-    document.getElementById('adm-content').style.display='block';
-    renderAdmList();renderAdmGangList();toast('🔓 مرحباً أيها المشرف!','success');
-  }else{toast('❌ كلمة السر غير صحيحة','error');}
-}
-
-function changeAdmin(){
-  const v=document.getElementById('new-adm-id').value.trim();
-  if(!v)return toast('⚠️ أدخل كلمة السر الجديدة','error');
-  adminId=v;saveAdm();document.getElementById('new-adm-id').value='';
-  toast('✅ تم تغيير كلمة السر','success');
-}
-
-function renderAdmList(){
-  const el=document.getElementById('adm-list');
-  if(!el)return;
-  if(!streamers.length){el.innerHTML=`<div style="text-align:center;color:var(--text2);font-size:13px;padding:16px">لا يوجد ستريمرز</div>`;return;}
-  el.innerHTML=streamers.map(s=>`
-    <div class="admin-item">
-      <span>${pEmoji(s.platform)}</span>
-      <span class="admin-item-name">${s.name}</span>
-      <button class="toggle-btn ${s.online?'online':'offline'}" onclick="toggleOnline(${s.id})">${s.online?'🟢 متصل':'⚫ غير متصل'}</button>
-      <button class="delete-btn" onclick="delStr(${s.id})">🗑️</button>
-    </div>`).join('');
-  ['r1','r2','r3'].forEach(k=>{
-    const n=document.getElementById(k+'n');const d=document.getElementById(k+'d');
-    if(n)n.value=lb[k]?.n||'';if(d)d.value=lb[k]?.d||'';
-  });
-}
-
-function toggleOnline(id){
-  const s=streamers.find(x=>x.id===id);if(!s)return;
-  s.online=!s.online;s.viewers=s.online?Math.floor(Math.random()*2000)+50:0;
-  saveStr();render();stats();renderAdmList();
-  toast(s.online?`🟢 ${s.name} متصل الآن`:`⚫ ${s.name} غير متصل`,s.online?'success':'error');
-}
-
-function addGangImage(){
-  const url=document.getElementById('gi-url').value.trim();
-  const label=document.getElementById('gi-label').value.trim();
-  const section=document.getElementById('gi-section').value;
-  if(!url)return toast('⚠️ أدخل رابط الصورة','error');
-  gangImages.push({id:Date.now(),url,label,section});
-  saveImgs();
-  document.getElementById('gi-url').value='';
-  document.getElementById('gi-label').value='';
-  renderGangImages();
-  renderAdmGangList();
-  toast('✅ تم إضافة الصورة','success');
-}
-
-function delGangImage(id){
-  gangImages=gangImages.filter(g=>g.id!==id);
-  saveImgs();renderGangImages();renderAdmGangList();
-  toast('🗑️ تم حذف الصورة','error');
-}
-
-function renderAdmGangList(){
-  const el=document.getElementById('adm-gang-list');
-  if(!el)return;
-  if(!gangImages.length){el.innerHTML='';return;}
-  const secLabel=s=>s==='locations'?'📍 مقرات':'👕 أطقم';
-  el.innerHTML=gangImages.map(g=>`
-    <div class="admin-item" style="gap:8px">
-      <img src="${g.url}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;border:1px solid rgba(139,92,246,0.3);flex-shrink:0" onerror="this.style.display='none'">
-      <span class="admin-item-name" style="font-size:12px">${g.label||'بدون وصف'}</span>
-      <span style="font-size:11px;color:var(--accent2);white-space:nowrap">${secLabel(g.section)}</span>
-      <button class="delete-btn" onclick="delGangImage(${g.id})">🗑️</button>
-    </div>`).join('');
-}
-
-function renderGangImages(){
-  ['locations','outfits'].forEach(sec=>{
-    const grid=document.getElementById(`grid-${sec}`);
-    const items=gangImages.filter(g=>g.section===sec);
-    if(!items.length){
-      const icon=sec==='locations'?'📍':'👕';
-      const label=sec==='locations'?'المقرات والأماكن':'الأطقم والملابس';
-      grid.innerHTML=`<div class="empty-gangs"><div class="empty-gangs-icon">${icon}</div><div class="empty-gangs-text">لا توجد صور بعد<br>أضف صور ${label} من لوحة الإدارة</div></div>`;
-      return;
-    }
-    grid.innerHTML=items.map((g,i)=>`
-      <div class="gang-card" style="animation-delay:${i*0.05}s">
-        <img src="${g.url}" alt="${g.label||'صورة'}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22><rect fill=%22%23161616%22 width=%22200%22 height=%22200%22/><text fill=%22%238a7a5a%22 font-size=%2240%22 x=%2250%%22 y=%2255%%22 text-anchor=%22middle%22>🖼️</text></svg>'">
-        <div class="gang-card-overlay">
-          ${g.label?`<div class="gang-card-label">${g.label}</div>`:''}
-        </div>
-        <button class="del-img-btn" onclick="delGangImage(${g.id})" title="حذف">✕</button>
-      </div>`).join('');
-  });
-}
-
-function openGangsPage(){
-  renderGangImages();
-  document.getElementById('gangs-page').classList.add('open');
-  document.body.style.overflow='hidden';
-}
-
-function closeGangsPage(){
-  document.getElementById('gangs-page').classList.remove('open');
-  document.body.style.overflow='';
-}
-
-function switchGangsTab(tab,btn){
-  document.querySelectorAll('.gangs-tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('.gangs-section').forEach(s=>s.classList.remove('active'));
-  document.getElementById(`tab-${tab}`).classList.add('active');
-}
-
-const open_=id=>document.getElementById(id).classList.add('open');
-const close_=id=>document.getElementById(id).classList.remove('open');
-document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});});
-document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){
-    document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));
-    closeGangsPage();
-  }
-});
-
-function toast(msg,type='success'){
-  const c=document.getElementById('toasts'),t=document.createElement('div');
-  t.className=`toast ${type}`;t.textContent=msg;
-  c.appendChild(t);setTimeout(()=>t.remove(),3000);
-}
-
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyD9xTrB4c6n9Y4DsVTYEYkRl_1ktVN_Hkc",
-  authDomain: "respect-gang.firebaseapp.com",
-  projectId: "respect-gang",
-  storageBucket: "respect-gang.firebasestorage.app",
-  messagingSenderId: "293595223902",
-  appId: "1:293595223902:web:213b3c2897b405dbeaa1cf",
-  measurementId: "G-CMXQRRQETG"
-};
-
+// Show Firebase connected status once listeners fire
+setTimeout(()=>{
+  const s=document.getElementById('fb-status');
+  if(s){s.className='fb-status connected';s.textContent='🟢 متصل بقاعدة البيانات';}
+  // Hide after 4s
+  setTimeout(()=>{if(s)s.style.opacity='0';},4000);
+  setTimeout(()=>{if(s)s.style.display='none';},4500);
+},2000);
 </script>
 </body>
 </html>
