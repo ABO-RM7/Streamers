@@ -600,84 +600,81 @@
 <!-- ==================== JS ==================== -->
 <script>
 // ===== CONFIG =====
-const STORAGE_KEY   = 'streamhub_data_v1';
+// مفاتيح localStorage
+const KEY_STREAMERS = 'sh_streamers';
+const KEY_LB        = 'sh_lb';
+const KEY_ADMIN     = 'sh_adminId';
+const KEY_FAV       = 'sh_fav';
+
 const WEBHOOK = 'https://discord.com/api/webhooks/1457668188128149663/Dm8KkDE8_K4gAN8nUOWm_4puSbDoNJ41ELi6yRcy6dPKgzKPrQjKMYYQKQXD7yeSZjdY';
 
+// ===== HELPERS: localStorage =====
+function lsGet(key, fallback = null) {
+  try {
+    const v = localStorage.getItem(key);
+    return v !== null ? JSON.parse(v) : fallback;
+  } catch(e) { return fallback; }
+}
+function lsSet(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch(e) {}
+}
+
 // ===== STATE =====
-let streamers = [];
-let lb        = {r1:{n:'',d:''},r2:{n:'',d:''},r3:{n:'',d:''}};
-let adminId   = 'vel123';
-let filter    = 'all';
-let currentNav = 'all'; // default tab is all streamers
-
-// Personal favorites (per-device, not shared)
-let favorites = JSON.parse(localStorage.getItem('sh_fav_local') || '[]');
-
-// ===== STORAGE HELPERS =====
-async function storageGet(key, shared = false) {
-  try {
-    const result = await window.storage.get(key, shared);
-    return result ? JSON.parse(result.value) : null;
-  } catch(e) { return null; }
-}
-
-async function storageSet(key, value, shared = false) {
-  try {
-    await window.storage.set(key, JSON.stringify(value), shared);
-  } catch(e) { console.error('Storage error:', e); }
-}
+let streamers  = [];
+let lb         = {r1:{n:'',d:''},r2:{n:'',d:''},r3:{n:'',d:''}};
+let adminId    = 'vel123';
+let filter     = 'all';
+let currentNav = 'all';
+let favorites  = [];
 
 // ===== BOOT =====
-window.onload = async () => {
-  await loadData();
+window.onload = () => {
+  loadData();
   document.getElementById('loading-screen').style.display = 'none';
-  // Start on favorites tab
   setNav('all', true);
 };
 
-async function loadData() {
-  // Load shared data (streamers, lb, adminId)
-  const sharedData = await storageGet(STORAGE_KEY, true);
+function loadData() {
+  // تحميل البيانات من localStorage
+  const savedStreamers = lsGet(KEY_STREAMERS);
+  const savedLb        = lsGet(KEY_LB);
+  const savedAdmin     = lsGet(KEY_ADMIN);
+  const savedFav       = lsGet(KEY_FAV);
 
-  if (sharedData) {
-    streamers = sharedData.streamers || [];
-    lb        = sharedData.lb || {r1:{n:'',d:''},r2:{n:'',d:''},r3:{n:'',d:''}};
-    adminId   = sharedData.adminId || 'vel123';
+  if (savedStreamers !== null) {
+    streamers = savedStreamers;
   } else {
-    // First time — seed defaults
+    // أول مرة — بيانات افتراضية
     streamers = [
       {id:1, name:'GamerAhmad',  url:'https://twitch.tv/example',  avatar:'', platform:'twitch',  online:false, viewers:0},
       {id:2, name:'StreamKing',  url:'https://kick.com/example',   avatar:'', platform:'kick',    online:true,  viewers:1240},
       {id:3, name:'ProPlayer99', url:'https://youtube.com/@ex',    avatar:'', platform:'youtube', online:false, viewers:0},
     ];
-    await saveShared();
+    lsSet(KEY_STREAMERS, streamers);
   }
+
+  lb      = savedLb    || {r1:{n:'',d:''},r2:{n:'',d:''},r3:{n:'',d:''}};
+  adminId = savedAdmin || 'vel123';
+  favorites = savedFav || [];
 }
 
-// ===== SAVE SHARED (for everyone) =====
-async function saveShared() {
-  await storageSet(STORAGE_KEY, { streamers, lb, adminId }, true);
-}
-
-// ===== SAVE LOCAL FAVORITES (per device) =====
-function saveFavLocal() {
-  localStorage.setItem('sh_fav_local', JSON.stringify(favorites));
-}
+// ===== SAVE =====
+function saveStreamers() { lsSet(KEY_STREAMERS, streamers); }
+function saveLbData()    { lsSet(KEY_LB, lb); }
+function saveAdminId()   { lsSet(KEY_ADMIN, adminId); }
+function saveFav()       { lsSet(KEY_FAV, favorites); }
 
 // ===== RENDER =====
 function render() {
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
 
-  // Base list
   let list = [...streamers];
 
-  // If favorites tab: show only favorited streamers
   if (currentNav === 'fav') {
     list = list.filter(s => favorites.includes(s.id));
   }
 
-  // Apply online/offline filter
   if (filter === 'online')  list = list.filter(s => s.online);
   if (filter === 'offline') list = list.filter(s => !s.online);
 
@@ -754,7 +751,7 @@ function setNav(sec, skipModal = false) {
     return;
   }
 
-  currentNav = sec; // 'fav' or 'all'
+  currentNav = sec;
   render();
   stats();
 }
@@ -773,8 +770,7 @@ function toggleFav(id, btn) {
     btn.classList.remove('active');
     toast('❌ أزيل من المفضلة','error');
   }
-  saveFavLocal();
-  // If on favorites tab, re-render to hide/show
+  saveFav();
   if (currentNav === 'fav') render();
 }
 
@@ -785,25 +781,25 @@ function visit(url) {
 }
 
 // ===== DELETE =====
-async function delStr(id) {
+function delStr(id) {
   if (!confirm('هل أنت متأكد من حذف هذا الستريمر نهائياً؟')) return;
   streamers = streamers.filter(s=>s.id!==id);
   favorites = favorites.filter(f=>f!==id);
-  saveFavLocal();
-  await saveShared();
+  saveStreamers();
+  saveFav();
   render(); stats(); renderAdmList();
   toast('🗑️ تم الحذف','error');
 }
 
 // ===== ADD STREAMER =====
-async function confirmAdd() {
+function confirmAdd() {
   const name = document.getElementById('ns-name').value.trim();
   const url  = document.getElementById('ns-url').value.trim();
   const av   = document.getElementById('ns-av').value.trim();
   const plat = document.getElementById('ns-plat').value;
   if (!name||!url) return toast('⚠️ أدخل الاسم والرابط','error');
   streamers.push({id:Date.now(),name,url,avatar:av,platform:plat,online:false,viewers:0});
-  await saveShared();
+  saveStreamers();
   close_('m-add'); render(); stats(); renderAdmList();
   toast(`✅ تم إضافة ${name}`,'success');
   ['ns-name','ns-url','ns-av'].forEach(id=>document.getElementById(id).value='');
@@ -842,11 +838,11 @@ function renderLb() {
     </div>`).join('');
 }
 
-async function saveLb() {
+function saveLb() {
   ['r1','r2','r3'].forEach(k=>{
     lb[k]={n:document.getElementById(k+'n').value.trim(), d:document.getElementById(k+'d').value.trim()};
   });
-  await saveShared();
+  saveLbData();
   renderLb();
   toast('💾 تم حفظ المراتب','success');
 }
@@ -870,11 +866,11 @@ function verifyAdmin() {
   }
 }
 
-async function changeAdmin() {
+function changeAdmin() {
   const v=document.getElementById('new-adm-id').value.trim();
   if (!v) return toast('⚠️ أدخل ID جديد','error');
   adminId=v;
-  await saveShared();
+  saveAdminId();
   document.getElementById('new-adm-id').value='';
   toast('✅ تم تغيير Discord ID','success');
 }
@@ -901,12 +897,12 @@ function renderAdmList() {
   });
 }
 
-async function toggleOnline(id) {
+function toggleOnline(id) {
   const s=streamers.find(x=>x.id===id);
   if (!s) return;
   s.online=!s.online;
   s.viewers=s.online?Math.floor(Math.random()*2000)+50:0;
-  await saveShared();
+  saveStreamers();
   render(); stats(); renderAdmList();
   toast(s.online?`🟢 ${s.name} متصل الآن`:`⚫ ${s.name} غير متصل`, s.online?'success':'error');
 }
