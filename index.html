@@ -597,7 +597,7 @@ function render(){
     const msg=currentNav==='fav'
       ?'لم تضف أي ستريمر للمفضلة بعد<br><small style="font-size:12px;opacity:0.45">اضغط ☆ على أي ستريمر لإضافته</small>'
       :'لا يوجد ستريمرز في هذا التصنيف';
-    grid.innerHTML=`<div class="empty-state"><div class="empty-icon">${currentNav==='fav'?'⭐':'📭'}</div><div class="empty-text">${msg}</div></div>`;
+    grid.innerHTML=`<div class="empty-state"><div class="empty-icon">${currentNav==='fav'?'⭐':''}</div><div class="empty-text">${msg}</div></div>`;
     return;
   }
   list.forEach((s,i)=>{
