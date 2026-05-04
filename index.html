@@ -3,28 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StreamHub - منصة الستريمرز</title>
+<title>Respect Gang System</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
   :root {
-    --bg: #07080f;
-    --bg2: #0d0e1a;
-    --bg3: #13152a;
-    --card: #111228;
-    --card2: #181a32;
-    --border: #252847;
-    --accent: #6c63ff;
-    --accent2: #9b8fff;
-    --accent3: #c4beff;
-    --online: #22c55e;
-    --offline: #6b7280;
-    --gold: #f59e0b;
-    --text: #eeeeff;
-    --text2: #9898c0;
-    --text3: #55557a;
-    --danger: #ef4444;
-    --glow: 0 0 24px rgba(108,99,255,0.35);
-    --glow2: 0 0 48px rgba(108,99,255,0.12);
+    --bg:      #080808;
+    --bg2:     #0f0f0f;
+    --bg3:     #161616;
+    --card:    #111111;
+    --card2:   #1a1a1a;
+    --border:  #2a2a2a;
+    --accent:  #c9a84c;
+    --accent2: #e0c06a;
+    --accent3: #f5e0a0;
+    --online:  #22c55e;
+    --offline: #4a4a4a;
+    --gold:    #c9a84c;
+    --text:    #f0ead6;
+    --text2:   #8a7a5a;
+    --text3:   #3d3520;
+    --danger:  #c0392b;
+    --glow:    0 0 28px rgba(201,168,76,0.4);
+    --glow2:   0 0 56px rgba(201,168,76,0.15);
   }
 
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -35,266 +38,318 @@
     min-height: 100vh;
     direction: rtl;
     overflow-x: hidden;
-    position: relative;
+    background: var(--bg);
   }
 
+  /* ===== BACKGROUND ===== */
   .bg-wrap {
     position: fixed; inset: 0; z-index: 0;
     background:
-      radial-gradient(ellipse 80% 60% at 70% -10%, rgba(108,99,255,0.22) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at -10% 80%, rgba(55,30,120,0.28) 0%, transparent 55%),
-      radial-gradient(ellipse 50% 40% at 100% 100%, rgba(30,20,80,0.3) 0%, transparent 50%),
-      linear-gradient(160deg, #07080f 0%, #0c0d1e 40%, #0a0b18 100%);
+      radial-gradient(ellipse 70% 50% at 80% 0%,   rgba(201,168,76,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 0%  100%,  rgba(201,168,76,0.05) 0%, transparent 55%),
+      linear-gradient(160deg, #080808 0%, #0c0b07 50%, #080808 100%);
     pointer-events: none;
   }
+  .bg-wrap::before {
+    content:'';
+    position:absolute; inset:0;
+    background-image: repeating-linear-gradient(
+      0deg, transparent, transparent 40px,
+      rgba(201,168,76,0.015) 40px, rgba(201,168,76,0.015) 41px
+    ), repeating-linear-gradient(
+      90deg, transparent, transparent 40px,
+      rgba(201,168,76,0.015) 40px, rgba(201,168,76,0.015) 41px
+    );
+  }
   .bg-wrap::after {
-    content: '';
-    position: absolute; inset: 0;
+    content:'';
+    position:absolute; inset:0;
     background-image:
-      radial-gradient(1px 1px at 20% 30%, rgba(108,99,255,0.5) 0%, transparent 100%),
-      radial-gradient(1px 1px at 80% 20%, rgba(155,143,255,0.4) 0%, transparent 100%),
-      radial-gradient(1px 1px at 50% 70%, rgba(108,99,255,0.45) 0%, transparent 100%),
-      radial-gradient(1px 1px at 10% 90%, rgba(155,143,255,0.35) 0%, transparent 100%),
-      radial-gradient(1px 1px at 90% 60%, rgba(108,99,255,0.4) 0%, transparent 100%);
-    background-size: 300px 300px, 400px 400px, 350px 350px, 280px 280px, 320px 320px;
-    animation: starFloat 25s linear infinite;
-    opacity: 0.7;
+      radial-gradient(1px 1px at 15% 25%, rgba(201,168,76,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 75% 15%, rgba(245,224,160,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 45% 65%, rgba(201,168,76,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 5%  85%, rgba(245,224,160,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 88% 55%, rgba(201,168,76,0.45) 0%, transparent 100%),
+      radial-gradient(1px 1px at 30% 90%, rgba(245,224,160,0.35) 0%, transparent 100%);
+    background-size: 320px 320px, 420px 420px, 360px 360px, 290px 290px, 340px 340px, 380px 380px;
+    animation: starFloat 30s linear infinite;
+    opacity: 0.8;
   }
   @keyframes starFloat {
-    0%   { background-position: 0 0,0 0,0 0,0 0,0 0; }
-    100% { background-position: 300px 300px,-400px 400px,350px -350px,-280px 280px,320px -320px; }
+    0%   { background-position: 0 0,0 0,0 0,0 0,0 0,0 0; }
+    100% { background-position: 320px 320px,-420px 420px,360px -360px,-290px 290px,340px -340px,-380px 380px; }
   }
 
+  /* ===== NAVBAR ===== */
   .navbar {
     position: sticky; top: 0; z-index: 100;
-    background: rgba(7,8,15,0.88);
+    background: rgba(8,8,8,0.92);
     backdrop-filter: blur(24px);
-    border-bottom: 1px solid rgba(108,99,255,0.18);
-    padding: 0 24px; height: 64px;
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    border-bottom: 1px solid rgba(201,168,76,0.25);
+    padding: 0 28px; height: 68px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
   }
-  .nav-right { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+  .nav-right { display:flex; align-items:center; gap:14px; flex-shrink:0; }
   .logo {
-    width:40px; height:40px;
-    background:linear-gradient(135deg,var(--accent),var(--accent2));
-    border-radius:10px; display:flex; align-items:center; justify-content:center;
-    font-size:20px; box-shadow:var(--glow); flex-shrink:0;
+    width:44px; height:44px;
+    background: linear-gradient(135deg, #c9a84c, #e0c06a);
+    border-radius: 10px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; box-shadow: var(--glow); flex-shrink:0;
+    position:relative; overflow:hidden;
+  }
+  .logo::after {
+    content:''; position:absolute; inset:0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
   }
   .nav-title {
-    font-size:20px; font-weight:900;
-    background:linear-gradient(135deg,#fff 30%,var(--accent3));
+    font-size:18px; font-weight:900; letter-spacing:1px;
+    background: linear-gradient(135deg, #f5e0a0 0%, #c9a84c 50%, #f5e0a0 100%);
     -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
-    white-space:nowrap;
+    white-space:nowrap; text-transform:uppercase;
   }
-  .nav-buttons { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .nav-buttons { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
   .nav-btn {
     display:flex; align-items:center; gap:6px;
-    padding:8px 16px; border:1px solid var(--border);
-    background:rgba(255,255,255,0.03); color:var(--text2);
+    padding:8px 18px; border:1px solid rgba(201,168,76,0.2);
+    background:rgba(201,168,76,0.03); color:var(--text2);
     border-radius:8px; cursor:pointer;
-    font-family:'Cairo',sans-serif; font-size:13px; font-weight:600;
-    transition:all 0.2s; white-space:nowrap; backdrop-filter:blur(8px);
+    font-family:'Cairo',sans-serif; font-size:13px; font-weight:700;
+    transition:all 0.2s; white-space:nowrap;
   }
-  .nav-btn:hover { border-color:var(--accent); color:var(--text); background:rgba(108,99,255,0.1); }
+  .nav-btn:hover { border-color:rgba(201,168,76,0.5); color:var(--accent3); background:rgba(201,168,76,0.07); }
   .nav-btn.active {
-    background:linear-gradient(135deg,var(--accent),var(--accent2));
-    color:white; border-color:transparent; box-shadow:var(--glow);
+    background: linear-gradient(135deg, #c9a84c, #a07830);
+    color:#000; border-color:transparent;
+    box-shadow: var(--glow);
+    font-weight:900;
   }
 
-  .section-divider {
+  .gold-line {
     height:1px;
-    background:linear-gradient(90deg,transparent,rgba(108,99,255,0.3),transparent);
+    background:linear-gradient(90deg, transparent, rgba(201,168,76,0.5), transparent);
     position:relative; z-index:1;
   }
 
+  /* ===== FILTER ===== */
   .filter-bar {
     display:flex; align-items:center; gap:8px;
-    padding:12px 24px;
-    background:rgba(13,14,26,0.7); backdrop-filter:blur(12px);
-    border-bottom:1px solid rgba(108,99,255,0.1);
+    padding:12px 28px;
+    background:rgba(10,9,5,0.8); backdrop-filter:blur(12px);
+    border-bottom:1px solid rgba(201,168,76,0.08);
     position:relative; z-index:1; flex-wrap:wrap;
   }
-  .filter-label { font-size:12px; color:var(--text3); margin-left:8px; font-weight:700; }
+  .filter-label { font-size:11px; color:var(--text3); margin-left:8px; font-weight:900; text-transform:uppercase; letter-spacing:1px; }
   .filter-btn {
-    padding:6px 16px; border-radius:20px;
-    border:1px solid var(--border); background:transparent; color:var(--text2);
-    font-family:'Cairo',sans-serif; font-size:12px; font-weight:600;
+    padding:5px 16px; border-radius:20px;
+    border:1px solid rgba(201,168,76,0.15); background:transparent; color:var(--text2);
+    font-family:'Cairo',sans-serif; font-size:12px; font-weight:700;
     cursor:pointer; transition:all 0.2s;
   }
-  .filter-btn:hover { border-color:var(--accent2); color:var(--accent3); }
-  .filter-btn.active { background:var(--accent); color:white; border-color:var(--accent); box-shadow:0 0 12px rgba(108,99,255,0.3); }
+  .filter-btn:hover { border-color:rgba(201,168,76,0.4); color:var(--accent2); }
+  .filter-btn.active {
+    background: rgba(201,168,76,0.12);
+    color:var(--accent2); border-color:rgba(201,168,76,0.4);
+    box-shadow:0 0 10px rgba(201,168,76,0.15);
+  }
 
-  /* Loading overlay */
+  /* ===== LOADING ===== */
   #loading-screen {
     position:fixed; inset:0; z-index:9998;
-    background:rgba(7,8,15,0.97);
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+    background:rgba(8,8,8,0.98);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;
   }
   .loading-spinner {
-    width:48px; height:48px; border-radius:50%;
-    border:3px solid rgba(108,99,255,0.2);
+    width:52px; height:52px; border-radius:50%;
+    border:3px solid rgba(201,168,76,0.15);
     border-top-color:var(--accent);
-    animation:spin 0.8s linear infinite;
+    animation:spin 0.9s linear infinite;
   }
   @keyframes spin { to{transform:rotate(360deg)} }
-  .loading-text { font-size:14px; color:var(--text3); font-weight:600; }
+  .loading-text { font-size:13px; color:var(--text2); font-weight:700; letter-spacing:1px; text-transform:uppercase; }
+  .loading-logo { font-size:40px; animation: pulse-logo 1.5s ease infinite; }
+  @keyframes pulse-logo { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.1);opacity:0.7} }
 
-  .main { padding:24px; position:relative; z-index:1; }
+  /* ===== MAIN ===== */
+  .main { padding:28px; position:relative; z-index:1; }
 
   .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:28px; }
   .stat-card {
-    background:rgba(17,18,40,0.75);
-    border:1px solid rgba(108,99,255,0.15);
-    border-radius:16px; padding:20px;
+    background: rgba(14,12,6,0.9);
+    border:1px solid rgba(201,168,76,0.18);
+    border-radius:16px; padding:22px;
     display:flex; flex-direction:column; gap:6px;
     position:relative; overflow:hidden; transition:all 0.3s;
-    backdrop-filter:blur(12px);
+    backdrop-filter:blur(16px);
   }
   .stat-card::before {
     content:''; position:absolute; top:0; right:0;
-    width:100px; height:100px;
-    background:radial-gradient(circle,rgba(108,99,255,0.15),transparent);
-    border-radius:50%; transform:translate(30px,-30px);
+    width:120px; height:120px;
+    background:radial-gradient(circle, rgba(201,168,76,0.08), transparent);
+    border-radius:50%; transform:translate(40px,-40px);
   }
-  .stat-card:hover { border-color:rgba(108,99,255,0.4); transform:translateY(-3px); box-shadow:var(--glow2); }
-  .stat-icon { font-size:22px; margin-bottom:4px; }
-  .stat-label { font-size:11px; color:var(--text3); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+  .stat-card::after {
+    content:''; position:absolute; top:0; left:0; right:0; height:1px;
+    background:linear-gradient(90deg, transparent, rgba(201,168,76,0.3), transparent);
+  }
+  .stat-card:hover {
+    border-color:rgba(201,168,76,0.35);
+    transform:translateY(-4px); box-shadow:var(--glow2);
+  }
+  .stat-icon { font-size:24px; margin-bottom:4px; }
+  .stat-label { font-size:10px; color:var(--text2); font-weight:900; text-transform:uppercase; letter-spacing:1.5px; }
   .stat-value {
-    font-size:30px; font-weight:900;
-    background:linear-gradient(135deg,#fff,var(--accent3));
+    font-size:32px; font-weight:900;
+    background: linear-gradient(135deg, #f5e0a0, #c9a84c);
     -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    line-height:1;
   }
-  .stat-sub { font-size:11px; color:var(--online); font-weight:600; }
+  .stat-sub { font-size:11px; color:var(--online); font-weight:700; }
 
+  /* ===== GRID ===== */
   .streamers-grid {
     display:grid;
     grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
     gap:16px;
   }
 
+  /* ===== CARD ===== */
   .streamer-card {
-    background:rgba(17,18,40,0.75);
-    border:1px solid rgba(108,99,255,0.12);
+    background: rgba(12,11,7,0.92);
+    border:1px solid rgba(201,168,76,0.1);
     border-radius:18px; overflow:hidden;
     position:relative; transition:all 0.3s;
     animation:fadeInUp 0.4s ease both;
-    backdrop-filter:blur(12px);
+    backdrop-filter:blur(16px);
   }
-  @keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeInUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
   .streamer-card:hover {
-    border-color:rgba(108,99,255,0.45); transform:translateY(-5px);
-    box-shadow:0 12px 40px rgba(108,99,255,0.2); background:rgba(24,26,50,0.9);
+    border-color:rgba(201,168,76,0.4);
+    transform:translateY(-6px);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.6), 0 0 24px rgba(201,168,76,0.12);
+    background: rgba(18,16,8,0.95);
+  }
+  .streamer-card.is-online {
+    border-color:rgba(201,168,76,0.2);
   }
   .streamer-card.is-online::after {
     content:''; position:absolute; top:0; left:0; right:0; height:2px;
-    background:linear-gradient(90deg,transparent,var(--online),transparent);
+    background:linear-gradient(90deg,transparent,var(--accent),transparent);
   }
 
   .card-header {
     display:flex; align-items:center; justify-content:space-between;
-    padding:12px 14px; background:rgba(7,8,20,0.5);
-    border-bottom:1px solid rgba(108,99,255,0.1);
+    padding:12px 16px;
+    background: rgba(5,4,2,0.7);
+    border-bottom:1px solid rgba(201,168,76,0.08);
   }
   .platform-badge {
-    font-size:11px; font-weight:700; padding:3px 9px; border-radius:5px;
-    background:rgba(108,99,255,0.2); color:var(--accent3); border:1px solid rgba(108,99,255,0.3);
+    font-size:10px; font-weight:900; padding:3px 10px; border-radius:5px;
+    letter-spacing:0.5px; text-transform:uppercase;
+    background:rgba(201,168,76,0.1); color:var(--accent2); border:1px solid rgba(201,168,76,0.2);
   }
-  .platform-badge.twitch  { background:rgba(145,70,255,0.18); color:#bf94ff; border-color:rgba(145,70,255,0.3); }
-  .platform-badge.youtube { background:rgba(255,0,0,0.13);    color:#ff7070; border-color:rgba(255,0,0,0.2); }
-  .platform-badge.kick    { background:rgba(83,252,0,0.1);    color:#53fc00; border-color:rgba(83,252,0,0.2); }
+  .platform-badge.twitch  { background:rgba(145,70,255,0.12); color:#bf94ff; border-color:rgba(145,70,255,0.25); }
+  .platform-badge.youtube { background:rgba(255,40,40,0.1);   color:#ff8080; border-color:rgba(255,40,40,0.2); }
+  .platform-badge.kick    { background:rgba(83,252,0,0.08);   color:#6fff40; border-color:rgba(83,252,0,0.18); }
 
   .header-actions { display:flex; align-items:center; gap:6px; }
   .star-btn {
     background:none; border:none; cursor:pointer;
     font-size:20px; line-height:1; transition:all 0.2s; color:var(--text3); padding:2px;
   }
-  .star-btn:hover { transform:scale(1.25); color:var(--gold); }
-  .star-btn.active { color:var(--gold); filter:drop-shadow(0 0 6px rgba(245,158,11,0.6)); }
-  .delete-btn {
-    background:none; border:none; cursor:pointer;
-    font-size:13px; color:var(--text3);
-    padding:3px 6px; border-radius:5px; transition:all 0.2s; font-weight:700;
-  }
-  .delete-btn:hover { background:rgba(239,68,68,0.15); color:var(--danger); }
+  .star-btn:hover { transform:scale(1.3); color:var(--gold); }
+  .star-btn.active { color:var(--gold); filter:drop-shadow(0 0 8px rgba(201,168,76,0.7)); }
 
-  .card-body { padding:20px 14px 16px; display:flex; flex-direction:column; align-items:center; gap:10px; }
-  .streamer-name { font-size:15px; font-weight:800; color:var(--text); text-align:center; }
+  .card-body { padding:22px 16px 18px; display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .streamer-name { font-size:15px; font-weight:900; color:var(--text); text-align:center; letter-spacing:0.3px; }
 
   .status-badge {
     display:flex; align-items:center; gap:5px;
-    font-size:11px; font-weight:700; padding:4px 12px; border-radius:20px;
+    font-size:11px; font-weight:700; padding:4px 14px; border-radius:20px;
   }
-  .status-badge.online  { background:rgba(34,197,94,0.13);    color:var(--online); border:1px solid rgba(34,197,94,0.28); }
-  .status-badge.offline { background:rgba(107,114,128,0.1); color:var(--offline); border:1px solid rgba(107,114,128,0.18); }
+  .status-badge.online  { background:rgba(34,197,94,0.1); color:var(--online); border:1px solid rgba(34,197,94,0.25); }
+  .status-badge.offline { background:rgba(40,40,40,0.6);  color:var(--offline); border:1px solid rgba(60,60,60,0.4); }
   .status-dot { width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; }
-  .status-badge.online .status-dot { animation:pulse 1.4s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(1.4)} }
+  .status-badge.online .status-dot { animation:pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(1.5)} }
 
   .avatar {
-    width:76px; height:76px; border-radius:50%;
-    border:3px solid rgba(108,99,255,0.2);
-    background:var(--bg3);
+    width:80px; height:80px; border-radius:50%;
+    border:2px solid rgba(201,168,76,0.2);
+    background: var(--bg3);
     display:flex; align-items:center; justify-content:center;
-    font-size:30px; overflow:hidden; transition:all 0.3s;
+    font-size:32px; overflow:hidden; transition:all 0.3s;
+    position:relative;
   }
-  .streamer-card:hover .avatar { border-color:rgba(108,99,255,0.5); }
+  .avatar::before {
+    content:''; position:absolute; inset:0; border-radius:50%;
+    background: linear-gradient(135deg, rgba(201,168,76,0.05), transparent);
+  }
+  .streamer-card:hover .avatar { border-color:rgba(201,168,76,0.45); }
   .avatar.online-border {
-    border-color:var(--online);
-    box-shadow:0 0 0 3px rgba(34,197,94,0.15),0 0 16px rgba(34,197,94,0.25);
+    border-color:var(--accent);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.1), 0 0 20px rgba(201,168,76,0.25);
   }
   .avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
 
-  .viewers-count { font-size:11px; color:var(--text3); font-weight:600; }
-  .online-viewers { color:var(--online); font-weight:800; }
+  .viewers-count { font-size:11px; color:var(--text2); font-weight:700; }
+  .online-viewers { color:var(--accent2); font-weight:900; }
 
   .visit-btn {
-    width:100%; padding:9px;
-    background:linear-gradient(135deg,var(--accent),var(--accent2));
-    color:white; border:none; border-radius:10px;
-    font-family:'Cairo',sans-serif; font-size:13px; font-weight:700;
+    width:100%; padding:10px;
+    background: linear-gradient(135deg, #c9a84c, #a07830);
+    color:#000; border:none; border-radius:10px;
+    font-family:'Cairo',sans-serif; font-size:13px; font-weight:900;
     cursor:pointer; transition:all 0.2s;
     display:flex; align-items:center; justify-content:center; gap:6px;
+    letter-spacing:0.3px;
   }
-  .visit-btn:hover { opacity:0.85; box-shadow:var(--glow); transform:scale(0.98); }
+  .visit-btn:hover { box-shadow:var(--glow); transform:scale(0.97); opacity:0.9; }
 
+  /* ===== MODALS ===== */
   .modal-overlay {
     position:fixed; inset:0;
-    background:rgba(0,0,0,0.82); backdrop-filter:blur(8px);
+    background:rgba(0,0,0,0.88); backdrop-filter:blur(10px);
     z-index:1000; display:flex; align-items:center; justify-content:center;
     padding:20px; opacity:0; pointer-events:none; transition:opacity 0.25s;
   }
   .modal-overlay.open { opacity:1; pointer-events:all; }
   .modal {
-    background:rgba(12,13,28,0.98);
-    border:1px solid rgba(108,99,255,0.25);
-    border-radius:22px; padding:28px;
+    background: rgba(10,9,5,0.99);
+    border:1px solid rgba(201,168,76,0.25);
+    border-radius:22px; padding:30px;
     width:100%; max-width:440px;
-    transform:translateY(20px) scale(0.97); transition:all 0.25s;
-    box-shadow:0 24px 80px rgba(0,0,0,0.7),0 0 60px rgba(108,99,255,0.1);
+    transform:translateY(24px) scale(0.97); transition:all 0.25s;
+    box-shadow: 0 30px 100px rgba(0,0,0,0.8), 0 0 60px rgba(201,168,76,0.08);
     max-height:90vh; overflow-y:auto;
+    position:relative;
+  }
+  .modal::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(201,168,76,0.4),transparent);
   }
   .modal-overlay.open .modal { transform:translateY(0) scale(1); }
 
-  .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
-  .modal-title { font-size:17px; font-weight:800; color:var(--text); }
+  .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+  .modal-title { font-size:17px; font-weight:900; color:var(--accent2); letter-spacing:0.5px; }
   .modal-close {
-    background:rgba(255,255,255,0.05); border:1px solid var(--border);
-    color:var(--text2); width:30px; height:30px; border-radius:8px;
+    background:rgba(255,255,255,0.03); border:1px solid rgba(201,168,76,0.15);
+    color:var(--text2); width:32px; height:32px; border-radius:8px;
     cursor:pointer; font-size:15px; display:flex; align-items:center; justify-content:center; transition:all 0.2s;
   }
-  .modal-close:hover { background:rgba(239,68,68,0.15); color:var(--danger); border-color:var(--danger); }
+  .modal-close:hover { background:rgba(192,57,43,0.15); color:var(--danger); border-color:var(--danger); }
 
   .form-group { display:flex; flex-direction:column; gap:7px; margin-bottom:14px; }
-  .form-label { font-size:12px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:0.5px; }
+  .form-label { font-size:11px; font-weight:900; color:var(--text2); text-transform:uppercase; letter-spacing:1px; }
   .form-input {
-    background:rgba(255,255,255,0.04); border:1px solid var(--border);
+    background:rgba(255,255,255,0.03); border:1px solid rgba(201,168,76,0.15);
     color:var(--text); border-radius:10px; padding:11px 14px;
     font-family:'Cairo',sans-serif; font-size:14px; width:100%;
     transition:border-color 0.2s; outline:none;
   }
-  .form-input:focus { border-color:var(--accent2); box-shadow:0 0 0 3px rgba(108,99,255,0.12); }
+  .form-input:focus { border-color:rgba(201,168,76,0.5); box-shadow:0 0 0 3px rgba(201,168,76,0.08); }
   .form-select {
-    background:rgba(255,255,255,0.04); border:1px solid var(--border);
+    background:rgba(255,255,255,0.03); border:1px solid rgba(201,168,76,0.15);
     color:var(--text); border-radius:10px; padding:11px 14px;
     font-family:'Cairo',sans-serif; font-size:14px; width:100%;
     outline:none; cursor:pointer; appearance:none;
@@ -302,49 +357,57 @@
 
   .btn-primary {
     width:100%; padding:12px;
-    background:linear-gradient(135deg,var(--accent),var(--accent2));
-    color:white; border:none; border-radius:10px;
-    font-family:'Cairo',sans-serif; font-size:14px; font-weight:700;
+    background: linear-gradient(135deg, #c9a84c, #a07830);
+    color:#000; border:none; border-radius:10px;
+    font-family:'Cairo',sans-serif; font-size:14px; font-weight:900;
     cursor:pointer; transition:all 0.2s; margin-top:4px; display:block;
+    letter-spacing:0.5px;
   }
   .btn-primary:hover { opacity:0.88; box-shadow:var(--glow); }
   .btn-secondary {
     width:100%; padding:11px;
-    background:rgba(255,255,255,0.04); color:var(--text2);
-    border:1px solid var(--border); border-radius:10px;
+    background:rgba(255,255,255,0.03); color:var(--text2);
+    border:1px solid rgba(201,168,76,0.15); border-radius:10px;
     font-family:'Cairo',sans-serif; font-size:14px; font-weight:700;
     cursor:pointer; transition:all 0.2s; margin-top:8px; display:block;
   }
-  .btn-secondary:hover { border-color:var(--accent); color:var(--accent3); }
+  .btn-secondary:hover { border-color:rgba(201,168,76,0.4); color:var(--accent2); }
 
   .info-box {
-    background:rgba(108,99,255,0.08); border:1px solid rgba(108,99,255,0.2);
-    border-radius:10px; padding:10px 14px;
-    font-size:12px; color:var(--accent3); margin-bottom:14px; line-height:1.6;
+    background:rgba(201,168,76,0.06); border:1px solid rgba(201,168,76,0.18);
+    border-radius:10px; padding:12px 16px;
+    font-size:12px; color:var(--accent2); margin-bottom:16px; line-height:1.7;
   }
 
+  /* ===== LEADERBOARD ===== */
   .lb-item {
     display:flex; align-items:center; gap:14px;
-    padding:14px; background:rgba(255,255,255,0.03);
-    border:1px solid rgba(108,99,255,0.12); border-radius:13px; margin-bottom:10px;
+    padding:16px; background:rgba(15,13,6,0.8);
+    border:1px solid rgba(201,168,76,0.12); border-radius:14px; margin-bottom:10px;
+    position:relative; overflow:hidden;
+  }
+  .lb-item::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(201,168,76,0.2),transparent);
   }
   .rank-badge {
-    width:38px; height:38px; border-radius:50%;
+    width:40px; height:40px; border-radius:50%;
     display:flex; align-items:center; justify-content:center;
-    font-size:17px; font-weight:900; flex-shrink:0;
+    font-size:18px; font-weight:900; flex-shrink:0;
   }
-  .rank-1 { background:linear-gradient(135deg,#f59e0b,#fbbf24); color:#000; box-shadow:0 0 14px rgba(245,158,11,0.4); }
-  .rank-2 { background:linear-gradient(135deg,#9ca3af,#d1d5db); color:#000; }
-  .rank-3 { background:linear-gradient(135deg,#cd7c3d,#e59a5a); color:#000; }
+  .rank-1 { background:linear-gradient(135deg,#c9a84c,#f5e0a0); color:#000; box-shadow:0 0 16px rgba(201,168,76,0.5); }
+  .rank-2 { background:linear-gradient(135deg,#7a7a7a,#bdbdbd); color:#000; }
+  .rank-3 { background:linear-gradient(135deg,#8b5e3c,#c4854e); color:#000; }
   .lb-info { flex:1; }
-  .lb-rank-label { font-size:10px; color:var(--text3); font-weight:700; }
-  .lb-name { font-size:15px; font-weight:800; color:var(--text); }
-  .lb-id   { font-size:11px; color:var(--text3); font-family:monospace; }
+  .lb-rank-label { font-size:10px; color:var(--text3); font-weight:900; text-transform:uppercase; letter-spacing:1px; }
+  .lb-name { font-size:15px; font-weight:900; color:var(--text); }
+  .lb-id   { font-size:11px; color:var(--text2); font-family:monospace; }
 
+  /* ===== ADMIN ===== */
   .admin-item {
     display:flex; align-items:center; justify-content:space-between;
-    padding:11px 14px; background:rgba(255,255,255,0.03);
-    border:1px solid rgba(108,99,255,0.1); border-radius:10px;
+    padding:11px 14px; background:rgba(15,13,6,0.7);
+    border:1px solid rgba(201,168,76,0.08); border-radius:10px;
     margin-bottom:8px; gap:10px;
   }
   .admin-item-name { font-size:14px; font-weight:700; color:var(--text); flex:1; }
@@ -353,48 +416,64 @@
     cursor:pointer; font-family:'Cairo',sans-serif; font-size:12px; font-weight:700;
     transition:all 0.2s; flex-shrink:0;
   }
-  .toggle-btn.online  { background:rgba(34,197,94,0.15);    color:var(--online); border:1px solid rgba(34,197,94,0.3); }
-  .toggle-btn.offline { background:rgba(107,114,128,0.1); color:var(--offline); border:1px solid rgba(107,114,128,0.2); }
-  .toggle-btn:hover { transform:scale(0.96); }
+  .toggle-btn.online  { background:rgba(34,197,94,0.12); color:var(--online); border:1px solid rgba(34,197,94,0.25); }
+  .toggle-btn.offline { background:rgba(40,40,40,0.5);   color:var(--offline); border:1px solid rgba(60,60,60,0.3); }
+  .toggle-btn:hover { transform:scale(0.95); }
+  .delete-btn {
+    background:none; border:none; cursor:pointer;
+    font-size:14px; color:var(--offline);
+    padding:4px 8px; border-radius:7px; transition:all 0.2s;
+  }
+  .delete-btn:hover { background:rgba(192,57,43,0.15); color:var(--danger); }
 
-  .empty-state { grid-column:1/-1; text-align:center; padding:70px 20px; color:var(--text3); }
-  .empty-icon  { font-size:50px; margin-bottom:14px; opacity:0.4; }
-  .empty-text  { font-size:15px; line-height:1.6; }
+  /* ===== EMPTY ===== */
+  .empty-state { grid-column:1/-1; text-align:center; padding:80px 20px; color:var(--text2); }
+  .empty-icon  { font-size:56px; margin-bottom:16px; opacity:0.3; }
+  .empty-text  { font-size:15px; line-height:1.7; }
 
+  /* ===== TOAST ===== */
   .toast-container { position:fixed; bottom:24px; left:24px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
   .toast {
-    background:rgba(12,13,28,0.98); border:1px solid var(--border);
-    border-radius:10px; padding:12px 18px; font-size:13px; font-weight:600; color:var(--text);
-    box-shadow:0 6px 24px rgba(0,0,0,0.6);
+    background:rgba(10,9,5,0.99); border:1px solid rgba(201,168,76,0.2);
+    border-radius:10px; padding:12px 20px; font-size:13px; font-weight:700; color:var(--text);
+    box-shadow:0 8px 30px rgba(0,0,0,0.7);
     animation:slideIn 0.3s ease, fadeOut 0.3s ease 2.5s forwards;
-    display:flex; align-items:center; gap:8px;
   }
-  @keyframes slideIn { from{transform:translateX(-20px);opacity:0} to{transform:translateX(0);opacity:1} }
-  @keyframes fadeOut { to{opacity:0;transform:translateX(-20px)} }
-  .toast.success { border-color:rgba(34,197,94,0.4); }
-  .toast.error   { border-color:rgba(239,68,68,0.4); }
+  @keyframes slideIn { from{transform:translateX(-24px);opacity:0} to{transform:translateX(0);opacity:1} }
+  @keyframes fadeOut { to{opacity:0;transform:translateX(-24px)} }
+  .toast.success { border-color:rgba(34,197,94,0.35); }
+  .toast.error   { border-color:rgba(192,57,43,0.4); }
 
+  /* ===== FAB ===== */
   #admin-fab { position:fixed; bottom:24px; right:24px; z-index:500; }
   #admin-fab button {
-    width:52px; height:52px; border-radius:50%;
-    background:linear-gradient(135deg,var(--accent),var(--accent2));
-    border:none; color:white; font-size:22px; cursor:pointer;
-    box-shadow:0 4px 24px rgba(108,99,255,0.45); transition:all 0.2s;
-    display:flex; align-items:center; justify-content:center;
+    width:54px; height:54px; border-radius:50%;
+    background: linear-gradient(135deg, #c9a84c, #a07830);
+    border:none; color:#000; font-size:22px; cursor:pointer;
+    box-shadow: 0 4px 24px rgba(201,168,76,0.5); transition:all 0.2s;
+    display:flex; align-items:center; justify-content:center; font-weight:900;
   }
-  #admin-fab button:hover { transform:scale(1.1) rotate(15deg); }
+  #admin-fab button:hover { transform:scale(1.12) rotate(20deg); box-shadow:var(--glow); }
 
+  /* ===== RESPONSIVE ===== */
   @media(max-width:768px){
-    .nav-title{font-size:16px} .nav-btn{padding:6px 10px;font-size:12px}
+    .nav-title{font-size:14px;letter-spacing:0.5px}
+    .nav-btn{padding:6px 10px;font-size:12px}
     .stats-row{grid-template-columns:repeat(3,1fr);gap:10px}
-    .main{padding:16px} .navbar{padding:0 14px} .filter-bar{padding:10px 14px}
+    .main{padding:16px} .navbar{padding:0 16px} .filter-bar{padding:10px 16px}
     .streamers-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
   }
   @media(max-width:480px){
     .nav-btn{padding:5px 8px;font-size:11px;gap:3px}
-    .stat-value{font-size:22px}
-    .streamers-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+    .stat-value{font-size:24px}
+    .streamers-grid{grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px}
   }
+
+  /* scrollbar */
+  ::-webkit-scrollbar{width:6px}
+  ::-webkit-scrollbar-track{background:rgba(201,168,76,0.03)}
+  ::-webkit-scrollbar-thumb{background:rgba(201,168,76,0.2);border-radius:3px}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(201,168,76,0.35)}
 </style>
 </head>
 <body>
@@ -402,6 +481,7 @@
 
 <!-- LOADING -->
 <div id="loading-screen">
+  <div class="loading-logo">👑</div>
   <div class="loading-spinner"></div>
   <div class="loading-text">جارٍ تحميل البيانات...</div>
 </div>
@@ -409,8 +489,8 @@
 <!-- NAVBAR -->
 <nav class="navbar">
   <div class="nav-right">
-    <div class="logo">📡</div>
-    <span class="nav-title">StreamHub</span>
+    <div class="logo">👑</div>
+    <span class="nav-title">Respect Gang System</span>
   </div>
   <div class="nav-buttons">
     <button class="nav-btn active" id="btn-all"  onclick="setNav('all')">📋 الكل</button>
@@ -419,11 +499,11 @@
     <button class="nav-btn" id="btn-ch"  onclick="setNav('ch')">📺 قناتك</button>
   </div>
 </nav>
-<div class="section-divider"></div>
+<div class="gold-line"></div>
 
 <!-- FILTER -->
-<div class="filter-bar" id="filter-bar">
-  <span class="filter-label">عرض:</span>
+<div class="filter-bar">
+  <span class="filter-label">عرض :</span>
   <button class="filter-btn active" onclick="setFilter('all',this)">الكل</button>
   <button class="filter-btn" onclick="setFilter('online',this)">🟢 المتصلين</button>
   <button class="filter-btn" onclick="setFilter('offline',this)">⚫ غير متصل</button>
@@ -454,12 +534,9 @@
 </div>
 
 <div class="toast-container" id="toasts"></div>
+<div id="admin-fab"><button onclick="openAdmin()" title="لوحة الإدارة">⚙️</button></div>
 
-<div id="admin-fab">
-  <button onclick="openAdmin()" title="لوحة الإدارة">⚙️</button>
-</div>
-
-<!-- ==================== MODALS ==================== -->
+<!-- ===== MODALS ===== -->
 
 <!-- ADD CHANNEL -->
 <div class="modal-overlay" id="m-ch">
@@ -539,7 +616,6 @@
       <div class="modal-title">⚙️ لوحة الإدارة</div>
       <button class="modal-close" onclick="close_('m-admin')">✕</button>
     </div>
-
     <div id="adm-login">
       <div class="info-box">🔐 أدخل Discord ID الخاص بك للوصول إلى لوحة الإدارة</div>
       <div class="form-group">
@@ -549,45 +625,31 @@
       </div>
       <button class="btn-primary" onclick="verifyAdmin()">🔓 دخول</button>
     </div>
-
     <div id="adm-content" style="display:none">
       <div class="info-box">✅ مرحباً أيها المشرف! يمكنك إدارة الستريمرز من هنا.</div>
-
-      <button class="btn-primary" style="margin-bottom:14px"
-        onclick="close_('m-admin');open_('m-add')">➕ إضافة ستريمر جديد</button>
-
-      <div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">
-        🔄 تغيير حالة الستريمرز وحذفهم
-      </div>
+      <button class="btn-primary" style="margin-bottom:14px" onclick="close_('m-admin');open_('m-add')">➕ إضافة ستريمر جديد</button>
+      <div style="font-size:11px;font-weight:900;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">🔄 الستريمرز</div>
       <div id="adm-list"></div>
-
-      <div style="height:1px;background:rgba(108,99,255,0.15);margin:16px 0"></div>
-      <div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">
-        🏆 تعديل المتصدرين
+      <div style="height:1px;background:rgba(201,168,76,0.12);margin:16px 0"></div>
+      <div style="font-size:11px;font-weight:900;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">🏆 المتصدرون</div>
+      <div class="form-group">
+        <label class="form-label">🥇 المركز الأول</label>
+        <input class="form-input" id="r1n" placeholder="الاسم">
+        <input class="form-input" style="margin-top:6px" id="r1d" placeholder="Discord ID" dir="ltr">
       </div>
-      <div id="lb-edit">
-        <div class="form-group">
-          <label class="form-label">🥇 المركز الأول</label>
-          <input class="form-input" id="r1n" placeholder="الاسم">
-          <input class="form-input" style="margin-top:6px" id="r1d" placeholder="Discord ID" dir="ltr">
-        </div>
-        <div class="form-group">
-          <label class="form-label">🥈 المركز الثاني</label>
-          <input class="form-input" id="r2n" placeholder="الاسم">
-          <input class="form-input" style="margin-top:6px" id="r2d" placeholder="Discord ID" dir="ltr">
-        </div>
-        <div class="form-group">
-          <label class="form-label">🥉 المركز الثالث</label>
-          <input class="form-input" id="r3n" placeholder="الاسم">
-          <input class="form-input" style="margin-top:6px" id="r3d" placeholder="Discord ID" dir="ltr">
-        </div>
-        <button class="btn-primary" style="margin-bottom:0" onclick="saveLb()">💾 حفظ المراتب</button>
+      <div class="form-group">
+        <label class="form-label">🥈 المركز الثاني</label>
+        <input class="form-input" id="r2n" placeholder="الاسم">
+        <input class="form-input" style="margin-top:6px" id="r2d" placeholder="Discord ID" dir="ltr">
       </div>
-
-      <div style="height:1px;background:rgba(108,99,255,0.15);margin:16px 0"></div>
-      <div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">
-        🔑 تغيير Discord ID للمشرف
+      <div class="form-group">
+        <label class="form-label">🥉 المركز الثالث</label>
+        <input class="form-input" id="r3n" placeholder="الاسم">
+        <input class="form-input" style="margin-top:6px" id="r3d" placeholder="Discord ID" dir="ltr">
       </div>
+      <button class="btn-primary" onclick="saveLb()">💾 حفظ المراتب</button>
+      <div style="height:1px;background:rgba(201,168,76,0.12);margin:16px 0"></div>
+      <div style="font-size:11px;font-weight:900;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">🔑 تغيير ID المشرف</div>
       <div class="form-group">
         <input class="form-input" id="new-adm-id" placeholder="Discord ID جديد" dir="ltr">
       </div>
@@ -597,27 +659,30 @@
   </div>
 </div>
 
-<!-- ==================== JS ==================== -->
+<!-- ===== FIREBASE + JS ===== -->
 <script>
-// ===== CONFIG =====
-// مفاتيح localStorage
-const KEY_STREAMERS = 'sh_streamers';
-const KEY_LB        = 'sh_lb';
-const KEY_ADMIN     = 'sh_adminId';
-const KEY_FAV       = 'sh_fav';
+// ══════════════════════════════════════════
+//  🔥 FIREBASE CONFIG
+//  ↓↓ ضع هنا بيانات مشروعك من Firebase ↓↓
+// ══════════════════════════════════════════
+const firebaseConfig = {
+  apiKey:            "AIzaSyD-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",   // ← غيّر
+  authDomain:        "your-project.firebaseapp.com",              // ← غيّر
+  databaseURL:       "https://your-project-default-rtdb.firebaseio.com", // ← غيّر
+  projectId:         "your-project",                              // ← غيّر
+  storageBucket:     "your-project.appspot.com",
+  messagingSenderId: "000000000000",
+  appId:             "1:000000000000:web:xxxxxxxxxxxxxxxx"
+};
+// ══════════════════════════════════════════
+
+firebase.initializeApp(firebaseConfig);
+const db      = firebase.database();
+const REF_STR = db.ref('streamers');
+const REF_LB  = db.ref('lb');
+const REF_ADM = db.ref('adminId');
 
 const WEBHOOK = 'https://discord.com/api/webhooks/1457668188128149663/Dm8KkDE8_K4gAN8nUOWm_4puSbDoNJ41ELi6yRcy6dPKgzKPrQjKMYYQKQXD7yeSZjdY';
-
-// ===== HELPERS: localStorage =====
-function lsGet(key, fallback = null) {
-  try {
-    const v = localStorage.getItem(key);
-    return v !== null ? JSON.parse(v) : fallback;
-  } catch(e) { return fallback; }
-}
-function lsSet(key, value) {
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch(e) {}
-}
 
 // ===== STATE =====
 let streamers  = [];
@@ -625,62 +690,51 @@ let lb         = {r1:{n:'',d:''},r2:{n:'',d:''},r3:{n:'',d:''}};
 let adminId    = 'vel123';
 let filter     = 'all';
 let currentNav = 'all';
-let favorites  = [];
+let favorites  = JSON.parse(localStorage.getItem('sh_fav')||'[]');
 
 // ===== BOOT =====
 window.onload = () => {
-  loadData();
-  document.getElementById('loading-screen').style.display = 'none';
-  setNav('all', true);
+  // Listen realtime for streamers
+  REF_STR.on('value', snap => {
+    const val = snap.val();
+    streamers = val ? Object.values(val) : [];
+    render(); stats();
+    if (document.getElementById('adm-content').style.display !== 'none') renderAdmList();
+  });
+
+  REF_LB.on('value', snap => {
+    lb = snap.val() || {r1:{n:'',d:''},r2:{n:'',d:''},r3:{n:'',d:''}};
+  });
+
+  REF_ADM.once('value', snap => {
+    adminId = snap.val() || 'vel123';
+    document.getElementById('loading-screen').style.display = 'none';
+    setNav('all', true);
+  });
 };
 
-function loadData() {
-  // تحميل البيانات من localStorage
-  const savedStreamers = lsGet(KEY_STREAMERS);
-  const savedLb        = lsGet(KEY_LB);
-  const savedAdmin     = lsGet(KEY_ADMIN);
-  const savedFav       = lsGet(KEY_FAV);
-
-  if (savedStreamers !== null) {
-    streamers = savedStreamers;
-  } else {
-    // أول مرة — بيانات افتراضية
-    streamers = [
-      {id:1, name:'GamerAhmad',  url:'https://twitch.tv/example',  avatar:'', platform:'twitch',  online:false, viewers:0},
-      {id:2, name:'StreamKing',  url:'https://kick.com/example',   avatar:'', platform:'kick',    online:true,  viewers:1240},
-      {id:3, name:'ProPlayer99', url:'https://youtube.com/@ex',    avatar:'', platform:'youtube', online:false, viewers:0},
-    ];
-    lsSet(KEY_STREAMERS, streamers);
-  }
-
-  lb      = savedLb    || {r1:{n:'',d:''},r2:{n:'',d:''},r3:{n:'',d:''}};
-  adminId = savedAdmin || 'vel123';
-  favorites = savedFav || [];
-}
-
 // ===== SAVE =====
-function saveStreamers() { lsSet(KEY_STREAMERS, streamers); }
-function saveLbData()    { lsSet(KEY_LB, lb); }
-function saveAdminId()   { lsSet(KEY_ADMIN, adminId); }
-function saveFav()       { lsSet(KEY_FAV, favorites); }
+function saveStreamers() {
+  const obj = {};
+  streamers.forEach(s => { obj[s.id] = s; });
+  REF_STR.set(obj);
+}
+function saveLbData()  { REF_LB.set(lb); }
+function saveAdminId() { REF_ADM.set(adminId); }
+function saveFav()     { localStorage.setItem('sh_fav', JSON.stringify(favorites)); }
 
 // ===== RENDER =====
 function render() {
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
-
   let list = [...streamers];
-
-  if (currentNav === 'fav') {
-    list = list.filter(s => favorites.includes(s.id));
-  }
-
+  if (currentNav === 'fav') list = list.filter(s => favorites.includes(s.id));
   if (filter === 'online')  list = list.filter(s => s.online);
   if (filter === 'offline') list = list.filter(s => !s.online);
 
   if (!list.length) {
     const msg = currentNav === 'fav'
-      ? 'لم تضف أي ستريمر للمفضلة بعد 🌟<br><small style="font-size:12px;opacity:0.6">اضغط ☆ على أي ستريمر لإضافته</small>'
+      ? 'لم تضف أي ستريمر للمفضلة بعد 👑<br><small style="font-size:12px;opacity:0.5">اضغط ☆ على أي ستريمر لإضافته</small>'
       : 'لا يوجد ستريمرز في هذا التصنيف';
     grid.innerHTML = `<div class="empty-state"><div class="empty-icon">${currentNav==='fav'?'⭐':'📭'}</div><div class="empty-text">${msg}</div></div>`;
     return;
@@ -700,7 +754,7 @@ function render() {
       <div class="card-header">
         <span class="platform-badge ${s.platform}">${s.platform.toUpperCase()}</span>
         <div class="header-actions">
-          <button class="star-btn ${isFav?'active':''}" onclick="toggleFav(${s.id},this)">${isFav?'⭐':'☆'}</button>
+          <button class="star-btn ${isFav?'active':''}" onclick="toggleFav('${s.id}',this)">${isFav?'⭐':'☆'}</button>
         </div>
       </div>
       <div class="card-body">
@@ -709,7 +763,7 @@ function render() {
           <div class="status-dot"></div>${s.online?'متصل':'غير متصل'}
         </div>
         <div class="avatar ${s.online?'online-border':''}">${avInner}</div>
-        ${s.online&&s.viewers>0?`<div class="viewers-count">👁️ <span class="online-viewers">${s.viewers.toLocaleString()}</span> مشاهد</div>`:''}
+        ${s.online&&s.viewers>0?`<div class="viewers-count">👁️ <span class="online-viewers">${Number(s.viewers).toLocaleString()}</span> مشاهد</div>`:''}
         <button class="visit-btn" onclick="visit('${s.url}')">🔗 زيارة القناة</button>
       </div>`;
     grid.appendChild(card);
@@ -720,8 +774,8 @@ function pEmoji(p) { return p==='twitch'?'🟣':p==='youtube'?'🔴':p==='kick'?
 
 // ===== STATS =====
 function stats() {
-  const on  = streamers.filter(s=>s.online).length;
-  const vw  = streamers.reduce((a,s)=>a+(s.viewers||0),0);
+  const on = streamers.filter(s=>s.online).length;
+  const vw = streamers.reduce((a,s)=>a+(Number(s.viewers)||0),0);
   document.getElementById('s-total').textContent   = streamers.length;
   document.getElementById('s-online').textContent  = on;
   document.getElementById('s-viewers').textContent = vw.toLocaleString();
@@ -738,40 +792,30 @@ function setFilter(f, btn) {
 }
 
 // ===== NAV =====
-function setNav(sec, skipModal = false) {
+function setNav(sec, skipModal=false) {
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   const btn = document.getElementById(`btn-${sec}`);
   if (btn) btn.classList.add('active');
-
-  if (sec === 'lb') {
-    renderLb(); open_('m-lb'); return;
-  }
-  if (sec === 'ch') {
-    if (!skipModal) { document.getElementById('ch-url').value=''; open_('m-ch'); }
-    return;
-  }
-
+  if (sec==='lb') { renderLb(); open_('m-lb'); return; }
+  if (sec==='ch') { if (!skipModal) { document.getElementById('ch-url').value=''; open_('m-ch'); } return; }
   currentNav = sec;
   render();
-  stats();
 }
 
 // ===== FAVORITE =====
 function toggleFav(id, btn) {
   const i = favorites.indexOf(id);
-  if (i === -1) {
+  if (i===-1) {
     favorites.push(id);
-    btn.textContent = '⭐';
-    btn.classList.add('active');
+    btn.textContent='⭐'; btn.classList.add('active');
     toast('✅ أضيف للمفضلة','success');
   } else {
-    favorites.splice(i, 1);
-    btn.textContent = '☆';
-    btn.classList.remove('active');
+    favorites.splice(i,1);
+    btn.textContent='☆'; btn.classList.remove('active');
     toast('❌ أزيل من المفضلة','error');
   }
   saveFav();
-  if (currentNav === 'fav') render();
+  if (currentNav==='fav') render();
 }
 
 // ===== VISIT =====
@@ -783,11 +827,9 @@ function visit(url) {
 // ===== DELETE =====
 function delStr(id) {
   if (!confirm('هل أنت متأكد من حذف هذا الستريمر نهائياً؟')) return;
-  streamers = streamers.filter(s=>s.id!==id);
+  REF_STR.child(id).remove();
   favorites = favorites.filter(f=>f!==id);
-  saveStreamers();
   saveFav();
-  render(); stats(); renderAdmList();
   toast('🗑️ تم الحذف','error');
 }
 
@@ -798,11 +840,11 @@ function confirmAdd() {
   const av   = document.getElementById('ns-av').value.trim();
   const plat = document.getElementById('ns-plat').value;
   if (!name||!url) return toast('⚠️ أدخل الاسم والرابط','error');
-  streamers.push({id:Date.now(),name,url,avatar:av,platform:plat,online:false,viewers:0});
-  saveStreamers();
-  close_('m-add'); render(); stats(); renderAdmList();
+  const id = Date.now().toString();
+  REF_STR.child(id).set({id, name, url, avatar:av, platform:plat, online:false, viewers:0});
+  close_('m-add');
   toast(`✅ تم إضافة ${name}`,'success');
-  ['ns-name','ns-url','ns-av'].forEach(id=>document.getElementById(id).value='');
+  ['ns-name','ns-url','ns-av'].forEach(k=>document.getElementById(k).value='');
 }
 
 // ===== CHANNEL REQUEST =====
@@ -810,19 +852,17 @@ async function submitChannel() {
   const url  = document.getElementById('ch-url').value.trim();
   const plat = document.getElementById('ch-plat').value;
   if (!url) return toast('⚠️ أدخل رابط القناة','error');
-  if (WEBHOOK) {
-    try {
-      await fetch(WEBHOOK,{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({content:`📺 **طلب إضافة قناة**\n🔗 ${url}\n🎮 ${plat}\n⏰ ${new Date().toLocaleString('ar')}`})});
-    } catch(e) {}
-  }
+  try {
+    await fetch(WEBHOOK,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({content:`📺 **طلب إضافة قناة**\n🔗 ${url}\n🎮 ${plat}\n⏰ ${new Date().toLocaleString('ar')}`})});
+  } catch(e){}
   close_('m-ch');
   toast('📤 تم إرسال طلبك! سيتم مراجعته قريباً','success');
 }
 
 // ===== LEADERBOARD =====
 function renderLb() {
-  const ranks=[
+  const ranks = [
     {k:'r1',lbl:'المركز الأول',  em:'🥇',cls:'rank-1'},
     {k:'r2',lbl:'المركز الثاني', em:'🥈',cls:'rank-2'},
     {k:'r3',lbl:'المركز الثالث', em:'🥉',cls:'rank-3'},
@@ -832,8 +872,8 @@ function renderLb() {
       <div class="rank-badge ${r.cls}">${r.em}</div>
       <div class="lb-info">
         <div class="lb-rank-label">${r.lbl}</div>
-        <div class="lb-name">${lb[r.k].n||'—'}</div>
-        ${lb[r.k].d?`<div class="lb-id">Discord: ${lb[r.k].d}</div>`:''}
+        <div class="lb-name">${lb[r.k]?.n||'—'}</div>
+        ${lb[r.k]?.d?`<div class="lb-id">Discord: ${lb[r.k].d}</div>`:''}
       </div>
     </div>`).join('');
 }
@@ -867,50 +907,46 @@ function verifyAdmin() {
 }
 
 function changeAdmin() {
-  const v=document.getElementById('new-adm-id').value.trim();
+  const v = document.getElementById('new-adm-id').value.trim();
   if (!v) return toast('⚠️ أدخل ID جديد','error');
-  adminId=v;
+  adminId = v;
   saveAdminId();
   document.getElementById('new-adm-id').value='';
   toast('✅ تم تغيير Discord ID','success');
 }
 
-// ===== ADMIN STREAMER LIST =====
 function renderAdmList() {
-  const el=document.getElementById('adm-list');
+  const el = document.getElementById('adm-list');
   if (!el) return;
-  if (!streamers.length) { el.innerHTML=`<div style="text-align:center;color:var(--text3);font-size:13px;padding:20px">لا يوجد ستريمرز</div>`; return; }
-  el.innerHTML=streamers.map(s=>`
+  if (!streamers.length) { el.innerHTML=`<div style="text-align:center;color:var(--text2);font-size:13px;padding:20px">لا يوجد ستريمرز</div>`; return; }
+  el.innerHTML = streamers.map(s=>`
     <div class="admin-item">
       <span>${pEmoji(s.platform)}</span>
       <span class="admin-item-name">${s.name}</span>
-      <button class="toggle-btn ${s.online?'online':'offline'}" onclick="toggleOnline(${s.id})">
+      <button class="toggle-btn ${s.online?'online':'offline'}" onclick="toggleOnline('${s.id}')">
         ${s.online?'🟢 متصل':'⚫ غير متصل'}
       </button>
-      <button class="delete-btn" onclick="delStr(${s.id})" style="padding:4px 8px;border-radius:7px;font-size:14px">🗑️</button>
+      <button class="delete-btn" onclick="delStr('${s.id}')">🗑️</button>
     </div>`).join('');
-  // fill lb fields with current values
   ['r1','r2','r3'].forEach(k=>{
     const n=document.getElementById(k+'n'); const d=document.getElementById(k+'d');
-    if(n&&!n.value) n.value=lb[k].n||'';
-    if(d&&!d.value) d.value=lb[k].d||'';
+    if(n) n.value=lb[k]?.n||'';
+    if(d) d.value=lb[k]?.d||'';
   });
 }
 
 function toggleOnline(id) {
-  const s=streamers.find(x=>x.id===id);
+  const s = streamers.find(x=>x.id===id);
   if (!s) return;
-  s.online=!s.online;
-  s.viewers=s.online?Math.floor(Math.random()*2000)+50:0;
-  saveStreamers();
-  render(); stats(); renderAdmList();
-  toast(s.online?`🟢 ${s.name} متصل الآن`:`⚫ ${s.name} غير متصل`, s.online?'success':'error');
+  const newOnline   = !s.online;
+  const newViewers  = newOnline ? Math.floor(Math.random()*2000)+50 : 0;
+  REF_STR.child(id).update({online:newOnline, viewers:newViewers});
+  toast(newOnline?`🟢 ${s.name} متصل الآن`:`⚫ ${s.name} غير متصل`, newOnline?'success':'error');
 }
 
 // ===== MODAL HELPERS =====
 function open_(id)  { document.getElementById(id).classList.add('open'); }
 function close_(id) { document.getElementById(id).classList.remove('open'); }
-
 document.querySelectorAll('.modal-overlay').forEach(o=>{
   o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); });
 });
@@ -919,9 +955,9 @@ document.addEventListener('keydown',e=>{
 });
 
 // ===== TOAST =====
-function toast(msg,type='success') {
-  const c=document.getElementById('toasts');
-  const t=document.createElement('div');
+function toast(msg, type='success') {
+  const c = document.getElementById('toasts');
+  const t = document.createElement('div');
   t.className=`toast ${type}`; t.textContent=msg;
   c.appendChild(t); setTimeout(()=>t.remove(),3000);
 }
