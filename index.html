@@ -270,7 +270,7 @@ window.submitChannel = async () => {
   const url = document.getElementById('ch-url').value.trim();
   const plat = document.getElementById('ch-plat').value;
   if (!url) return toast('⚠️ أدخل رابط القناة','error');
-  const WEBHOOK = 'https://discord.com/api/webhooks/1457668188128149663/Dm8KkDE8_K4gAN8nUOWm_4puSbDoNJ41ELi6yRcy6dPKgzKPrQjKMYYQKQXD7yeSZjdY';
+  const WEBHOOK = 'https://discord.com/api/webhooks/1500865604889088050/T5JyUBmQ0EC7cTRSmPO1rSbp5IeHwCtu9UhWb46ZK39IjDutCpekqeRVEtxUVzwkQpfQ';
   try { await fetch(WEBHOOK,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:`📺 **طلب إضافة قناة**\n🔗 ${url}\n🎮 ${plat}\n⏰ ${new Date().toLocaleString('ar')}`})}); } catch {}
   close_('m-ch');
   toast('📤 تم إرسال طلبك!','success');
