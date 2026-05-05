@@ -69,6 +69,17 @@
   .filter-btn:hover{border-color:rgba(139,92,246,0.38);color:var(--accent2);}
   .filter-btn.active{background:rgba(139,92,246,0.1);color:var(--accent2);border-color:rgba(139,92,246,0.38);box-shadow:0 0 10px rgba(139,92,246,0.12);}
 
+  /* DB Status Indicator */
+  #db-status{position:fixed;top:76px;left:50%;transform:translateX(-50%);z-index:999;
+    background:rgba(8,5,16,0.95);border:1px solid rgba(139,92,246,0.3);border-radius:8px;
+    padding:8px 20px;font-size:12px;font-weight:700;color:var(--accent2);
+    display:flex;align-items:center;gap:8px;backdrop-filter:blur(12px);
+    transition:all 0.4s;opacity:0;pointer-events:none;}
+  #db-status.show{opacity:1;}
+  #db-status.error{border-color:rgba(192,57,43,0.4);color:#ff8080;}
+  .db-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.5s infinite;}
+  #db-status.error .db-dot{background:#ff6060;animation:none;}
+
   #loading-screen{position:fixed;inset:0;z-index:9998;background:rgba(8,8,8,0.98);
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
   .loading-spinner{width:52px;height:52px;border-radius:50%;border:3px solid rgba(139,92,246,0.12);border-top-color:var(--accent);animation:spin 0.9s linear infinite;}
@@ -310,6 +321,9 @@
 <body>
 <div class="bg-wrap"></div>
 
+<!-- DB Status -->
+<div id="db-status"><div class="db-dot"></div><span id="db-status-text">جارٍ الاتصال بقاعدة البيانات...</span></div>
+
 <div id="loading-screen">
   <div class="loading-logo">
     <img src="https://cdn.discordapp.com/attachments/1496248320065274006/1500789464400658432/IMG_7311.png?ex=69f9b69b&is=69f8651b&hm=17616b940dd2b152d5f5c0176f5a7ba1466c9f2964800a2f1e690f0b8204b941&" alt="logo" onerror="this.parentElement.innerHTML='👑';this.parentElement.style.fontSize='44px'">
@@ -365,13 +379,13 @@
 </div>
 
 <footer class="site-footer">
-  جميع الحقوق محفوظة &copy; <span>Respect Gang System (RM7)</span> 2026
+  جميع الحقوق محفوظة &copy; <span>Respect Gang System</span> 2025
 </footer>
 
 <div class="toast-container" id="toasts"></div>
 
 <div id="gangs-fab">
-  <button onclick="openGangsPage()"> قسم العصابات</button>
+  <button onclick="openGangsPage()">🔫 قسم العصابات</button>
 </div>
 
 <div id="admin-fab"><button onclick="openAdmin()" title="لوحة الإدارة">⚙️</button></div>
@@ -381,7 +395,7 @@
     <div class="gangs-banner-bg"></div>
     <button class="gangs-back-btn" onclick="closeGangsPage()">← رجوع</button>
     <div class="gangs-banner-content">
-      <div class="gangs-banner-icon"></div>
+      <div class="gangs-banner-icon">🔫</div>
       <div class="gangs-banner-title">قسم العصابات</div>
       <div class="gangs-banner-sub">المقرات والأطقم الرسمية</div>
     </div>
@@ -413,6 +427,7 @@
   </div>
 </div>
 
+<!-- Modals -->
 <div class="modal-overlay" id="m-ch">
   <div class="modal">
     <div class="modal-header">
@@ -487,7 +502,7 @@
       <button class="btn-primary" style="margin-bottom:14px" onclick="close_('m-admin');open_('m-add')">➕ إضافة ستريمر جديد</button>
 
       <div style="height:1px;background:rgba(139,92,246,0.1);margin:16px 0"></div>
-      <div style="font-size:11px;font-weight:900;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px"> صور قسم العصابات</div>
+      <div style="font-size:11px;font-weight:900;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">🔫 صور قسم العصابات</div>
       <div class="form-group">
         <label class="form-label">رابط الصورة</label>
         <input class="form-input" id="gi-url" placeholder="https://..." dir="ltr">
@@ -533,58 +548,147 @@
 </div>
 
 <script>
-const K_STR='rgs_streamers',K_LB='rgs_lb',K_ADM='rgs_adminId',K_FAV='rgs_fav',K_IMGS='rgs_gangimgs';
-const WEBHOOK='https://discord.com/api/webhooks/1457668188128149663/Dm8KkDE8_K4gAN8nUOWm_4puSbDoNJ41ELi6yRcy6dPKgzKPrQjKMYYQKQXD7yeSZjdY';
+// ====================================================
+//  DB LAYER — window.storage (Persistent Storage API)
+//  Falls back to in-memory if API unavailable
+// ====================================================
+const DB = {
+  _mem: {},   // in-memory fallback
 
-const lsGet=(k,fb=null)=>{try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):fb;}catch{return fb;}};
-const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
+  async get(key) {
+    try {
+      if (window.storage) {
+        const res = await window.storage.get(key);
+        return res ? JSON.parse(res.value) : null;
+      }
+    } catch(e) {}
+    return key in this._mem ? this._mem[key] : null;
+  },
 
-let streamers=[],lb={r1:{n:'',d:''},r2:{n:'',d:''},r3:{n:'',d:''}};
-let adminId='vel123',filter='all',currentNav='all',favorites=[],gangImages=[];
+  async set(key, value) {
+    try {
+      if (window.storage) {
+        await window.storage.set(key, JSON.stringify(value));
+        return;
+      }
+    } catch(e) {}
+    this._mem[key] = value;
+  },
 
-window.onload=()=>{
-  loadData();
-  document.getElementById('loading-screen').style.display='none';
-  setNav('all',true);
+  async delete(key) {
+    try {
+      if (window.storage) { await window.storage.delete(key); return; }
+    } catch(e) {}
+    delete this._mem[key];
+  }
 };
 
-function loadData(){
-  const s=lsGet(K_STR);
-  streamers=s!==null?s:[];
-  if(s===null)lsSet(K_STR,streamers);
-  lb=lsGet(K_LB)||{r1:{n:'',d:''},r2:{n:'',d:''},r3:{n:'',d:''}};
-  adminId=lsGet(K_ADM)||'vel123';
-  favorites=lsGet(K_FAV)||[];
-  gangImages=lsGet(K_IMGS)||[];
+// ====================================================
+//  KEYS
+// ====================================================
+const K_STR  = 'rgs:streamers';
+const K_LB   = 'rgs:lb';
+const K_ADM  = 'rgs:adminId';
+const K_FAV  = 'rgs:fav';
+const K_IMGS = 'rgs:gangimgs';
+
+const WEBHOOK = 'https://discord.com/api/webhooks/1457668188128149663/Dm8KkDE8_K4gAN8nUOWm_4puSbDoNJ41ELi6yRcy6dPKgzKPrQjKMYYQKQXD7yeSZjdY';
+
+// ====================================================
+//  STATE
+// ====================================================
+let streamers = [], lb = {r1:{n:'',d:''},r2:{n:'',d:''},r3:{n:'',d:''}};
+let adminId = 'vel123', filter = 'all', currentNav = 'all';
+let favorites = [], gangImages = [];
+
+// ====================================================
+//  DB STATUS INDICATOR
+// ====================================================
+function showDbStatus(msg, isError = false, autohide = true) {
+  const el = document.getElementById('db-status');
+  const txt = document.getElementById('db-status-text');
+  txt.textContent = msg;
+  el.className = isError ? 'show error' : 'show';
+  if (autohide) setTimeout(() => { el.className = ''; }, 2500);
 }
 
-const saveStr=()=>lsSet(K_STR,streamers);
-const saveLbD=()=>lsSet(K_LB,lb);
-const saveAdm=()=>lsSet(K_ADM,adminId);
-const saveFav=()=>lsSet(K_FAV,favorites);
-const saveImgs=()=>lsSet(K_IMGS,gangImages);
+// ====================================================
+//  LOAD ALL DATA FROM DB
+// ====================================================
+async function loadData() {
+  showDbStatus('جارٍ تحميل البيانات من قاعدة البيانات...', false, false);
+  try {
+    const [s, l, a, f, g] = await Promise.all([
+      DB.get(K_STR),
+      DB.get(K_LB),
+      DB.get(K_ADM),
+      DB.get(K_FAV),
+      DB.get(K_IMGS)
+    ]);
+    streamers   = Array.isArray(s) ? s : [];
+    lb          = l || {r1:{n:'',d:''},r2:{n:'',d:''},r3:{n:'',d:''}};
+    adminId     = a || 'vel123';
+    favorites   = Array.isArray(f) ? f : [];
+    gangImages  = Array.isArray(g) ? g : [];
 
-function render(){
-  const grid=document.getElementById('grid');
-  grid.innerHTML='';
-  let list=[...streamers];
-  if(currentNav==='fav')list=list.filter(s=>favorites.includes(s.id));
-  if(filter==='online')list=list.filter(s=>s.online);
-  if(filter==='offline')list=list.filter(s=>!s.online);
-  if(!list.length){
-    const msg=currentNav==='fav'
-      ?'لم تضف أي ستريمر للمفضلة بعد<br><small style="font-size:12px;opacity:0.45">اضغط ☆ على أي ستريمر لإضافته</small>'
-      :'لا يوجد ستريمرز في هذا التصنيف';
-    grid.innerHTML=`<div class="empty-state"><div class="empty-icon">${currentNav==='fav'?'⭐':''}</div><div class="empty-text">${msg}</div></div>`;
+    // First-time seed: write defaults if nothing existed
+    if (!s) await DB.set(K_STR, streamers);
+    if (!l) await DB.set(K_LB, lb);
+    if (!a) await DB.set(K_ADM, adminId);
+    if (!f) await DB.set(K_FAV, favorites);
+    if (!g) await DB.set(K_IMGS, gangImages);
+
+    showDbStatus('✅ تم الاتصال بقاعدة البيانات بنجاح');
+  } catch(e) {
+    showDbStatus('⚠️ تعذّر الاتصال — يعمل بدون حفظ دائم', true, false);
+    setTimeout(()=>{ document.getElementById('db-status').className=''; }, 4000);
+  }
+}
+
+// ====================================================
+//  SAVE HELPERS
+// ====================================================
+const saveStr  = () => DB.set(K_STR,  streamers);
+const saveLbD  = () => DB.set(K_LB,   lb);
+const saveAdm  = () => DB.set(K_ADM,  adminId);
+const saveFav  = () => DB.set(K_FAV,  favorites);
+const saveImgs = () => DB.set(K_IMGS, gangImages);
+
+// ====================================================
+//  BOOT
+// ====================================================
+window.onload = async () => {
+  await loadData();
+  document.getElementById('loading-screen').style.display = 'none';
+  render(); stats();
+};
+
+// ====================================================
+//  RENDER
+// ====================================================
+function render() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  let list = [...streamers];
+  if (currentNav === 'fav')    list = list.filter(s => favorites.includes(s.id));
+  if (filter === 'online')     list = list.filter(s => s.online);
+  if (filter === 'offline')    list = list.filter(s => !s.online);
+  if (!list.length) {
+    const msg = currentNav === 'fav'
+      ? 'لم تضف أي ستريمر للمفضلة بعد<br><small style="font-size:12px;opacity:0.45">اضغط ☆ على أي ستريمر لإضافته</small>'
+      : 'لا يوجد ستريمرز في هذا التصنيف';
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">${currentNav==='fav'?'⭐':'📭'}</div><div class="empty-text">${msg}</div></div>`;
     return;
   }
-  list.forEach((s,i)=>{
-    const isFav=favorites.includes(s.id);
-    const card=document.createElement('div');
-    card.className=`streamer-card${s.online?' is-online':''}`;
-    card.style.animationDelay=`${i*0.05}s`;
-    const avInner=s.avatar?`<img src="${s.avatar}" alt="${s.name}" onerror="this.style.display='none'">`:`<span>${pEmoji(s.platform)}</span>`;
-    card.innerHTML=`
+  list.forEach((s, i) => {
+    const isFav = favorites.includes(s.id);
+    const card = document.createElement('div');
+    card.className = `streamer-card${s.online?' is-online':''}`;
+    card.style.animationDelay = `${i*0.05}s`;
+    const avInner = s.avatar
+      ? `<img src="${s.avatar}" alt="${s.name}" onerror="this.style.display='none'">`
+      : `<span>${pEmoji(s.platform)}</span>`;
+    card.innerHTML = `
       <div class="card-header">
         <span class="platform-badge ${s.platform}">${s.platform.toUpperCase()}</span>
         <div class="header-actions">
@@ -604,74 +708,105 @@ function render(){
   });
 }
 
-const pEmoji=p=>p==='twitch'?'🟣':p==='youtube'?'🔴':p==='kick'?'🟢':'📺';
+const pEmoji = p => p==='twitch'?'🟣':p==='youtube'?'🔴':p==='kick'?'🟢':'📺';
 
-function stats(){
-  const on=streamers.filter(s=>s.online).length;
-  const vw=streamers.reduce((a,s)=>a+(Number(s.viewers)||0),0);
-  document.getElementById('s-total').textContent=streamers.length;
-  document.getElementById('s-online').textContent=on;
-  document.getElementById('s-viewers').textContent=vw.toLocaleString();
-  document.getElementById('s-osub').textContent=on>0?`${on} يبثون الآن 🔴`:'';
-  document.getElementById('s-vsub').textContent=vw>0?'مشاهد نشط ✨':'';
+function stats() {
+  const on = streamers.filter(s => s.online).length;
+  const vw = streamers.reduce((a,s) => a+(Number(s.viewers)||0), 0);
+  document.getElementById('s-total').textContent   = streamers.length;
+  document.getElementById('s-online').textContent  = on;
+  document.getElementById('s-viewers').textContent = vw.toLocaleString();
+  document.getElementById('s-osub').textContent    = on>0 ? `${on} يبثون الآن 🔴` : '';
+  document.getElementById('s-vsub').textContent    = vw>0 ? 'مشاهد نشط ✨' : '';
 }
 
-function setFilter(f,btn){
-  filter=f;
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');render();
+function setFilter(f, btn) {
+  filter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
 }
 
-function setNav(sec,skip=false){
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  const btn=document.getElementById(`btn-${sec}`);
-  if(btn)btn.classList.add('active');
-  if(sec==='lb'){renderLb();open_('m-lb');return;}
-  if(sec==='ch'){if(!skip){document.getElementById('ch-url').value='';open_('m-ch');}return;}
-  currentNav=sec;render();stats();
+function setNav(sec, skip=false) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById(`btn-${sec}`);
+  if (btn) btn.classList.add('active');
+  if (sec === 'lb') { renderLb(); open_('m-lb'); return; }
+  if (sec === 'ch') { if (!skip) { document.getElementById('ch-url').value=''; open_('m-ch'); } return; }
+  currentNav = sec;
+  render(); stats();
 }
 
-function toggleFav(id,btn){
-  const i=favorites.indexOf(id);
-  if(i===-1){favorites.push(id);btn.textContent='⭐';btn.classList.add('active');toast('✅ أضيف للمفضلة','success');}
-  else{favorites.splice(i,1);btn.textContent='☆';btn.classList.remove('active');toast('❌ أزيل من المفضلة','error');}
-  saveFav();if(currentNav==='fav')render();
+// ====================================================
+//  FAVORITES
+// ====================================================
+async function toggleFav(id, btn) {
+  const i = favorites.indexOf(id);
+  if (i === -1) {
+    favorites.push(id);
+    btn.textContent = '⭐'; btn.classList.add('active');
+    toast('✅ أضيف للمفضلة','success');
+  } else {
+    favorites.splice(i, 1);
+    btn.textContent = '☆'; btn.classList.remove('active');
+    toast('❌ أزيل من المفضلة','error');
+  }
+  await saveFav();
+  if (currentNav === 'fav') render();
 }
 
-function visit(url){if(!url||url==='#')return toast('لا يوجد رابط','error');window.open(url,'_blank');}
+function visit(url) {
+  if (!url || url==='#') return toast('لا يوجد رابط','error');
+  window.open(url,'_blank');
+}
 
-function delStr(id){
-  if(!confirm('هل أنت متأكد من حذف هذا الستريمر نهائياً؟'))return;
-  streamers=streamers.filter(s=>s.id!==id);
-  favorites=favorites.filter(f=>f!==id);
-  saveStr();saveFav();render();stats();renderAdmList();
+// ====================================================
+//  STREAMERS CRUD
+// ====================================================
+async function delStr(id) {
+  if (!confirm('هل أنت متأكد من حذف هذا الستريمر نهائياً؟')) return;
+  streamers = streamers.filter(s => s.id !== id);
+  favorites = favorites.filter(f => f !== id);
+  await saveStr(); await saveFav();
+  render(); stats(); renderAdmList();
   toast('🗑️ تم الحذف','error');
 }
 
-function confirmAdd(){
-  const name=document.getElementById('ns-name').value.trim();
-  const url=document.getElementById('ns-url').value.trim();
-  const av=document.getElementById('ns-av').value.trim();
-  const plat=document.getElementById('ns-plat').value;
-  if(!name||!url)return toast('⚠️ أدخل الاسم والرابط','error');
-  streamers.push({id:Date.now(),name,url,avatar:av,platform:plat,online:false,viewers:0});
-  saveStr();close_('m-add');render();stats();renderAdmList();
+async function confirmAdd() {
+  const name = document.getElementById('ns-name').value.trim();
+  const url  = document.getElementById('ns-url').value.trim();
+  const av   = document.getElementById('ns-av').value.trim();
+  const plat = document.getElementById('ns-plat').value;
+  if (!name || !url) return toast('⚠️ أدخل الاسم والرابط','error');
+  streamers.push({id:Date.now(), name, url, avatar:av, platform:plat, online:false, viewers:0});
+  await saveStr();
+  close_('m-add'); render(); stats(); renderAdmList();
   toast(`✅ تم إضافة ${name}`,'success');
-  ['ns-name','ns-url','ns-av'].forEach(k=>document.getElementById(k).value='');
+  ['ns-name','ns-url','ns-av'].forEach(k => document.getElementById(k).value='');
 }
 
-async function submitChannel(){
-  const url=document.getElementById('ch-url').value.trim();
-  const plat=document.getElementById('ch-plat').value;
-  if(!url)return toast('⚠️ أدخل رابط القناة','error');
-  try{await fetch(WEBHOOK,{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({content:`📺 **طلب إضافة قناة**\n🔗 ${url}\n🎮 ${plat}\n⏰ ${new Date().toLocaleString('ar')}`})});}catch{}
-  close_('m-ch');toast('📤 تم إرسال طلبك!','success');
+async function submitChannel() {
+  const url  = document.getElementById('ch-url').value.trim();
+  const plat = document.getElementById('ch-plat').value;
+  if (!url) return toast('⚠️ أدخل رابط القناة','error');
+  try {
+    await fetch(WEBHOOK,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({content:`📺 **طلب إضافة قناة**\n🔗 ${url}\n🎮 ${plat}\n⏰ ${new Date().toLocaleString('ar')}`})});
+  } catch{}
+  close_('m-ch');
+  toast('📤 تم إرسال طلبك!','success');
 }
 
-function renderLb(){
-  const ranks=[{k:'r1',lbl:'المركز الأول',em:'🥇',cls:'rank-1'},{k:'r2',lbl:'المركز الثاني',em:'🥈',cls:'rank-2'},{k:'r3',lbl:'المركز الثالث',em:'🥉',cls:'rank-3'}];
-  document.getElementById('lb-view').innerHTML=ranks.map(r=>`
+// ====================================================
+//  LEADERBOARD
+// ====================================================
+function renderLb() {
+  const ranks = [
+    {k:'r1',lbl:'المركز الأول',  em:'🥇',cls:'rank-1'},
+    {k:'r2',lbl:'المركز الثاني', em:'🥈',cls:'rank-2'},
+    {k:'r3',lbl:'المركز الثالث', em:'🥉',cls:'rank-3'}
+  ];
+  document.getElementById('lb-view').innerHTML = ranks.map(r=>`
     <div class="lb-item">
       <div class="rank-badge ${r.cls}">${r.em}</div>
       <div class="lb-info">
@@ -682,38 +817,53 @@ function renderLb(){
     </div>`).join('');
 }
 
-function saveLb(){
-  ['r1','r2','r3'].forEach(k=>{lb[k]={n:document.getElementById(k+'n').value.trim(),d:document.getElementById(k+'d').value.trim()};});
-  saveLbD();renderLb();toast('💾 تم حفظ المراتب','success');
+async function saveLb() {
+  ['r1','r2','r3'].forEach(k=>{
+    lb[k] = {n:document.getElementById(k+'n').value.trim(), d:document.getElementById(k+'d').value.trim()};
+  });
+  await saveLbD();
+  renderLb();
+  toast('💾 تم حفظ المراتب','success');
 }
 
-function openAdmin(){
-  document.getElementById('adm-login').style.display='block';
-  document.getElementById('adm-content').style.display='none';
-  document.getElementById('adm-inp').value='';
+// ====================================================
+//  ADMIN
+// ====================================================
+function openAdmin() {
+  document.getElementById('adm-login').style.display = 'block';
+  document.getElementById('adm-content').style.display = 'none';
+  document.getElementById('adm-inp').value = '';
   open_('m-admin');
 }
 
-function verifyAdmin(){
-  if(document.getElementById('adm-inp').value.trim()===adminId){
-    document.getElementById('adm-login').style.display='none';
-    document.getElementById('adm-content').style.display='block';
-    renderAdmList();renderAdmGangList();toast('🔓 مرحباً أيها المشرف!','success');
-  }else{toast('❌ كلمة السر غير صحيحة','error');}
+function verifyAdmin() {
+  if (document.getElementById('adm-inp').value.trim() === adminId) {
+    document.getElementById('adm-login').style.display = 'none';
+    document.getElementById('adm-content').style.display = 'block';
+    renderAdmList(); renderAdmGangList();
+    toast('🔓 مرحباً أيها المشرف!','success');
+  } else {
+    toast('❌ كلمة السر غير صحيحة','error');
+  }
 }
 
-function changeAdmin(){
-  const v=document.getElementById('new-adm-id').value.trim();
-  if(!v)return toast('⚠️ أدخل كلمة السر الجديدة','error');
-  adminId=v;saveAdm();document.getElementById('new-adm-id').value='';
+async function changeAdmin() {
+  const v = document.getElementById('new-adm-id').value.trim();
+  if (!v) return toast('⚠️ أدخل كلمة السر الجديدة','error');
+  adminId = v;
+  await saveAdm();
+  document.getElementById('new-adm-id').value = '';
   toast('✅ تم تغيير كلمة السر','success');
 }
 
-function renderAdmList(){
-  const el=document.getElementById('adm-list');
-  if(!el)return;
-  if(!streamers.length){el.innerHTML=`<div style="text-align:center;color:var(--text2);font-size:13px;padding:16px">لا يوجد ستريمرز</div>`;return;}
-  el.innerHTML=streamers.map(s=>`
+function renderAdmList() {
+  const el = document.getElementById('adm-list');
+  if (!el) return;
+  if (!streamers.length) {
+    el.innerHTML = `<div style="text-align:center;color:var(--text2);font-size:13px;padding:16px">لا يوجد ستريمرز</div>`;
+    return;
+  }
+  el.innerHTML = streamers.map(s=>`
     <div class="admin-item">
       <span>${pEmoji(s.platform)}</span>
       <span class="admin-item-name">${s.name}</span>
@@ -721,44 +871,50 @@ function renderAdmList(){
       <button class="delete-btn" onclick="delStr(${s.id})">🗑️</button>
     </div>`).join('');
   ['r1','r2','r3'].forEach(k=>{
-    const n=document.getElementById(k+'n');const d=document.getElementById(k+'d');
-    if(n)n.value=lb[k]?.n||'';if(d)d.value=lb[k]?.d||'';
+    const n=document.getElementById(k+'n'); const d=document.getElementById(k+'d');
+    if(n) n.value=lb[k]?.n||''; if(d) d.value=lb[k]?.d||'';
   });
 }
 
-function toggleOnline(id){
-  const s=streamers.find(x=>x.id===id);if(!s)return;
-  s.online=!s.online;s.viewers=s.online?Math.floor(Math.random()*2000)+50:0;
-  saveStr();render();stats();renderAdmList();
-  toast(s.online?`🟢 ${s.name} متصل الآن`:`⚫ ${s.name} غير متصل`,s.online?'success':'error');
+async function toggleOnline(id) {
+  const s = streamers.find(x => x.id===id);
+  if (!s) return;
+  s.online   = !s.online;
+  s.viewers  = s.online ? Math.floor(Math.random()*2000)+50 : 0;
+  await saveStr();
+  render(); stats(); renderAdmList();
+  toast(s.online?`🟢 ${s.name} متصل الآن`:`⚫ ${s.name} غير متصل`, s.online?'success':'error');
 }
 
-function addGangImage(){
-  const url=document.getElementById('gi-url').value.trim();
-  const label=document.getElementById('gi-label').value.trim();
-  const section=document.getElementById('gi-section').value;
-  if(!url)return toast('⚠️ أدخل رابط الصورة','error');
-  gangImages.push({id:Date.now(),url,label,section});
-  saveImgs();
-  document.getElementById('gi-url').value='';
-  document.getElementById('gi-label').value='';
-  renderGangImages();
-  renderAdmGangList();
+// ====================================================
+//  GANG IMAGES
+// ====================================================
+async function addGangImage() {
+  const url     = document.getElementById('gi-url').value.trim();
+  const label   = document.getElementById('gi-label').value.trim();
+  const section = document.getElementById('gi-section').value;
+  if (!url) return toast('⚠️ أدخل رابط الصورة','error');
+  gangImages.push({id:Date.now(), url, label, section});
+  await saveImgs();
+  document.getElementById('gi-url').value = '';
+  document.getElementById('gi-label').value = '';
+  renderGangImages(); renderAdmGangList();
   toast('✅ تم إضافة الصورة','success');
 }
 
-function delGangImage(id){
-  gangImages=gangImages.filter(g=>g.id!==id);
-  saveImgs();renderGangImages();renderAdmGangList();
+async function delGangImage(id) {
+  gangImages = gangImages.filter(g => g.id !== id);
+  await saveImgs();
+  renderGangImages(); renderAdmGangList();
   toast('🗑️ تم حذف الصورة','error');
 }
 
-function renderAdmGangList(){
-  const el=document.getElementById('adm-gang-list');
-  if(!el)return;
-  if(!gangImages.length){el.innerHTML='';return;}
-  const secLabel=s=>s==='locations'?'📍 مقرات':'👕 أطقم';
-  el.innerHTML=gangImages.map(g=>`
+function renderAdmGangList() {
+  const el = document.getElementById('adm-gang-list');
+  if (!el) return;
+  if (!gangImages.length) { el.innerHTML=''; return; }
+  const secLabel = s => s==='locations'?'📍 مقرات':'👕 أطقم';
+  el.innerHTML = gangImages.map(g=>`
     <div class="admin-item" style="gap:8px">
       <img src="${g.url}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;border:1px solid rgba(139,92,246,0.3);flex-shrink:0" onerror="this.style.display='none'">
       <span class="admin-item-name" style="font-size:12px">${g.label||'بدون وصف'}</span>
@@ -767,17 +923,17 @@ function renderAdmGangList(){
     </div>`).join('');
 }
 
-function renderGangImages(){
+function renderGangImages() {
   ['locations','outfits'].forEach(sec=>{
-    const grid=document.getElementById(`grid-${sec}`);
-    const items=gangImages.filter(g=>g.section===sec);
-    if(!items.length){
-      const icon=sec==='locations'?'📍':'👕';
-      const label=sec==='locations'?'المقرات والأماكن':'الأطقم والملابس';
+    const grid = document.getElementById(`grid-${sec}`);
+    const items = gangImages.filter(g => g.section===sec);
+    if (!items.length) {
+      const icon  = sec==='locations'?'📍':'👕';
+      const label = sec==='locations'?'المقرات والأماكن':'الأطقم والملابس';
       grid.innerHTML=`<div class="empty-gangs"><div class="empty-gangs-icon">${icon}</div><div class="empty-gangs-text">لا توجد صور بعد<br>أضف صور ${label} من لوحة الإدارة</div></div>`;
       return;
     }
-    grid.innerHTML=items.map((g,i)=>`
+    grid.innerHTML = items.map((g,i)=>`
       <div class="gang-card" style="animation-delay:${i*0.05}s">
         <img src="${g.url}" alt="${g.label||'صورة'}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22><rect fill=%22%23161616%22 width=%22200%22 height=%22200%22/><text fill=%22%238a7a5a%22 font-size=%2240%22 x=%2250%%22 y=%2255%%22 text-anchor=%22middle%22>🖼️</text></svg>'">
         <div class="gang-card-overlay">
@@ -788,51 +944,54 @@ function renderGangImages(){
   });
 }
 
-function openGangsPage(){
+// ====================================================
+//  GANGS PAGE
+// ====================================================
+function openGangsPage() {
   renderGangImages();
   document.getElementById('gangs-page').classList.add('open');
-  document.body.style.overflow='hidden';
+  document.body.style.overflow = 'hidden';
 }
 
-function closeGangsPage(){
+function closeGangsPage() {
   document.getElementById('gangs-page').classList.remove('open');
-  document.body.style.overflow='';
+  document.body.style.overflow = '';
 }
 
-function switchGangsTab(tab,btn){
-  document.querySelectorAll('.gangs-tab').forEach(t=>t.classList.remove('active'));
+function switchGangsTab(tab, btn) {
+  document.querySelectorAll('.gangs-tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
-  document.querySelectorAll('.gangs-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.gangs-section').forEach(s => s.classList.remove('active'));
   document.getElementById(`tab-${tab}`).classList.add('active');
 }
 
-const open_=id=>document.getElementById(id).classList.add('open');
-const close_=id=>document.getElementById(id).classList.remove('open');
-document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});});
-document.addEventListener('keydown',e=>{
+// ====================================================
+//  MODAL HELPERS
+// ====================================================
+const open_  = id => document.getElementById(id).classList.add('open');
+const close_ = id => document.getElementById(id).classList.remove('open');
+
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click', e=>{ if(e.target===o) o.classList.remove('open'); });
+});
+document.addEventListener('keydown', e=>{
   if(e.key==='Escape'){
     document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));
     closeGangsPage();
   }
 });
 
-function toast(msg,type='success'){
-  const c=document.getElementById('toasts'),t=document.createElement('div');
-  t.className=`toast ${type}`;t.textContent=msg;
-  c.appendChild(t);setTimeout(()=>t.remove(),3000);
+// ====================================================
+//  TOAST
+// ====================================================
+function toast(msg, type='success') {
+  const c=document.getElementById('toasts');
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;
+  t.textContent=msg;
+  c.appendChild(t);
+  setTimeout(()=>t.remove(), 3000);
 }
-
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyD9xTrB4c6n9Y4DsVTYEYkRl_1ktVN_Hkc",
-  authDomain: "respect-gang.firebaseapp.com",
-  projectId: "respect-gang",
-  storageBucket: "respect-gang.firebasestorage.app",
-  messagingSenderId: "293595223902",
-  appId: "1:293595223902:web:213b3c2897b405dbeaa1cf",
-  measurementId: "G-CMXQRRQETG"
-};
-
 </script>
 </body>
 </html>
