@@ -51,21 +51,11 @@
   .nav-btn:hover{border-color:rgba(139,92,246,0.45);color:var(--accent3);background:rgba(139,92,246,0.06);}
   .nav-btn.active{background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;border-color:transparent;box-shadow:var(--glow);font-weight:900;}
 
-  /* Kick API status indicator in navbar */
-  .kick-api-status{display:flex;align-items:center;gap:6px;padding:5px 12px;
-    border-radius:20px;border:1px solid rgba(83,252,0,0.15);background:rgba(83,252,0,0.04);
-    font-size:11px;font-weight:700;color:#5a8a4a;transition:all 0.3s;white-space:nowrap;}
-  .kick-api-status.active{border-color:rgba(83,252,0,0.3);color:#6fff40;background:rgba(83,252,0,0.07);}
-  .kick-api-status.error{border-color:rgba(255,80,80,0.3);color:#ff8080;background:rgba(255,80,80,0.05);}
-  .kick-api-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
-  .kick-api-status.active .kick-api-dot{animation:pulse 1.5s infinite;}
-
   @media(max-width:600px){
     .navbar{height:auto;flex-direction:column;align-items:stretch;padding:10px 14px;gap:8px;}
     .nav-right{justify-content:center;}
     .nav-buttons{justify-content:center;gap:6px;}
     .nav-btn{padding:7px 10px;font-size:12px;flex:1;justify-content:center;min-width:0;}
-    .kick-api-status{display:none;}
   }
 
   .gold-line{height:1px;background:linear-gradient(90deg,transparent,rgba(139,92,246,0.45),transparent);position:relative;z-index:1;}
@@ -78,11 +68,6 @@
     font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;}
   .filter-btn:hover{border-color:rgba(139,92,246,0.38);color:var(--accent2);}
   .filter-btn.active{background:rgba(139,92,246,0.1);color:var(--accent2);border-color:rgba(139,92,246,0.38);box-shadow:0 0 10px rgba(139,92,246,0.12);}
-
-  /* Refresh countdown badge */
-  .refresh-badge{margin-right:auto;display:flex;align-items:center;gap:5px;
-    font-size:10px;color:var(--text3);font-weight:700;letter-spacing:0.5px;}
-  .refresh-badge span{color:var(--accent2);}
 
   #loading-screen{position:fixed;inset:0;z-index:9998;background:rgba(8,8,8,0.98);
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
@@ -120,15 +105,6 @@
   .streamer-card.is-online{border-color:rgba(139,92,246,0.18);}
   .streamer-card.is-online::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;
     background:linear-gradient(90deg,transparent,var(--accent),transparent);}
-
-  /* Kick live indicator on card */
-  .kick-live-badge{display:none;position:absolute;top:10px;left:10px;z-index:5;
-    background:rgba(83,252,0,0.15);border:1px solid rgba(83,252,0,0.4);
-    color:#6fff40;font-size:9px;font-weight:900;padding:2px 8px;border-radius:4px;
-    letter-spacing:1px;text-transform:uppercase;animation:livePulse 2s ease infinite;}
-  .streamer-card.is-online .kick-live-badge.kick-card{display:flex;align-items:center;gap:4px;}
-  @keyframes livePulse{0%,100%{opacity:1}50%{opacity:0.5}}
-
   .card-header{display:flex;align-items:center;justify-content:space-between;
     padding:12px 16px;background:rgba(5,3,10,0.7);border-bottom:1px solid rgba(139,92,246,0.07);}
   .platform-badge{font-size:10px;font-weight:900;padding:3px 10px;border-radius:5px;
@@ -153,22 +129,13 @@
     font-size:32px;overflow:hidden;transition:all 0.3s;}
   .streamer-card:hover .avatar{border-color:rgba(139,92,246,0.42);}
   .avatar.online-border{border-color:var(--accent);box-shadow:0 0 0 3px rgba(139,92,246,0.1),0 0 20px rgba(139,92,246,0.22);}
-  /* Kick online avatar gets green glow */
-  .avatar.kick-online-border{border-color:#53fc00;box-shadow:0 0 0 3px rgba(83,252,0,0.1),0 0 20px rgba(83,252,0,0.2);}
   .avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
   .viewers-count{font-size:11px;color:var(--text2);font-weight:700;}
   .online-viewers{color:var(--accent2);font-weight:900;}
-  /* Kick viewers get green color */
-  .kick-viewers{color:#6fff40 !important;}
-  .stream-title-mini{font-size:10px;color:var(--text3);text-align:center;line-height:1.5;
-    max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:ltr;}
   .visit-btn{width:100%;padding:10px;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;border:none;border-radius:10px;
     font-family:'Cairo',sans-serif;font-size:13px;font-weight:900;cursor:pointer;transition:all 0.2s;
     display:flex;align-items:center;justify-content:center;gap:6px;letter-spacing:0.3px;}
   .visit-btn:hover{box-shadow:var(--glow);transform:scale(0.97);}
-  /* Kick visit button gets green gradient */
-  .visit-btn.kick-btn{background:linear-gradient(135deg,#2d6a00,#53a000);}
-  .visit-btn.kick-btn:hover{box-shadow:0 0 20px rgba(83,252,0,0.25);}
 
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);backdrop-filter:blur(10px);
     z-index:1000;display:flex;align-items:center;justify-content:center;
@@ -204,13 +171,6 @@
   .btn-secondary:hover{border-color:rgba(139,92,246,0.38);color:var(--accent2);}
   .info-box{background:rgba(139,92,246,0.05);border:1px solid rgba(139,92,246,0.16);
     border-radius:10px;padding:12px 16px;font-size:12px;color:var(--accent2);margin-bottom:16px;line-height:1.7;}
-  /* Kick info box */
-  .kick-info-box{background:rgba(83,252,0,0.04);border:1px solid rgba(83,252,0,0.15);
-    border-radius:10px;padding:10px 14px;font-size:11px;color:#5a9a3a;margin-top:6px;line-height:1.7;}
-
-  /* Form hint for kick username */
-  .form-hint{font-size:10px;color:var(--text3);margin-top:3px;padding-right:4px;}
-  .form-hint.kick-hint{color:#3a6a20;}
 
   .lb-item{display:flex;align-items:center;gap:14px;padding:16px;
     background:rgba(12,8,20,0.8);border:1px solid rgba(139,92,246,0.1);border-radius:14px;margin-bottom:10px;}
@@ -226,15 +186,11 @@
   .admin-item{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;
     background:rgba(12,8,20,0.7);border:1px solid rgba(139,92,246,0.07);border-radius:10px;margin-bottom:8px;gap:10px;}
   .admin-item-name{font-size:14px;font-weight:700;color:var(--text);flex:1;}
-  /* Kick streamer in admin has green dot */
-  .admin-kick-dot{width:8px;height:8px;border-radius:50%;background:#53fc00;opacity:0.6;flex-shrink:0;}
   .toggle-btn{padding:5px 14px;border-radius:20px;border:none;cursor:pointer;
     font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;transition:all 0.2s;flex-shrink:0;}
   .toggle-btn.online{background:rgba(34,197,94,0.1);color:var(--online);border:1px solid rgba(34,197,94,0.22);}
   .toggle-btn.offline{background:rgba(40,40,40,0.5);color:var(--offline);border:1px solid rgba(60,60,60,0.28);}
   .toggle-btn:hover{transform:scale(0.95);}
-  /* Kick toggle shows auto */
-  .toggle-btn.kick-auto{background:rgba(83,252,0,0.07);color:#6fff40;border:1px solid rgba(83,252,0,0.22);cursor:default;}
   .delete-btn{background:none;border:none;cursor:pointer;font-size:14px;color:var(--offline);
     padding:4px 8px;border-radius:7px;transition:all 0.2s;}
   .delete-btn:hover{background:rgba(192,57,43,0.14);color:var(--danger);}
@@ -250,7 +206,6 @@
   @keyframes fadeOut{to{opacity:0;transform:translateX(-24px)}}
   .toast.success{border-color:rgba(34,197,94,0.32);}
   .toast.error{border-color:rgba(192,57,43,0.38);}
-  .toast.kick{border-color:rgba(83,252,0,0.3);}
 
   #admin-fab{position:fixed;bottom:24px;right:24px;z-index:500;}
   #admin-fab button{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#5b21b6);
@@ -375,10 +330,6 @@
     <button class="nav-btn" id="btn-fav" onclick="setNav('fav')">⭐ المفضلة</button>
     <button class="nav-btn" id="btn-lb"  onclick="setNav('lb')">🏆 المتصدرين</button>
     <button class="nav-btn" id="btn-ch"  onclick="setNav('ch')">📺 قناتك</button>
-    <div class="kick-api-status" id="kick-api-status">
-      <div class="kick-api-dot"></div>
-      <span id="kick-api-label">Kick API</span>
-    </div>
   </div>
 </nav>
 <div class="gold-line"></div>
@@ -388,9 +339,6 @@
   <button class="filter-btn active" onclick="setFilter('all',this)">الكل</button>
   <button class="filter-btn" onclick="setFilter('online',this)">🟢 المتصلين</button>
   <button class="filter-btn" onclick="setFilter('offline',this)">⚫ غير متصل</button>
-  <div class="refresh-badge" id="refresh-badge" style="display:none">
-    🔄 تحديث Kick خلال <span id="countdown-sec">—</span> ث
-  </div>
 </div>
 
 <div class="main">
@@ -428,9 +376,6 @@
 
 <div id="admin-fab"><button onclick="openAdmin()" title="لوحة الإدارة">⚙️</button></div>
 
-<!-- ============================================================ -->
-<!--  GANGS PAGE                                                   -->
-<!-- ============================================================ -->
 <div id="gangs-page">
   <div class="gangs-banner">
     <div class="gangs-banner-bg"></div>
@@ -449,18 +394,25 @@
   <div class="gangs-content">
     <div class="gangs-section active" id="tab-locations">
       <div class="gangs-section-title">📍 المقرات والأماكن</div>
-      <div class="gangs-grid" id="grid-locations"></div>
+      <div class="gangs-grid" id="grid-locations">
+        <div class="empty-gangs">
+          <div class="empty-gangs-icon">📍</div>
+          <div class="empty-gangs-text">لا توجد صور بعد<br>أضف صور المقرات من لوحة الإدارة</div>
+        </div>
+      </div>
     </div>
     <div class="gangs-section" id="tab-outfits">
       <div class="gangs-section-title">👕 الأطقم والملابس</div>
-      <div class="gangs-grid" id="grid-outfits"></div>
+      <div class="gangs-grid" id="grid-outfits">
+        <div class="empty-gangs">
+          <div class="empty-gangs-icon">👕</div>
+          <div class="empty-gangs-text">لا توجد صور بعد<br>أضف صور الأطقم من لوحة الإدارة</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- ============================================================ -->
-<!--  MODALS                                                       -->
-<!-- ============================================================ -->
 <div class="modal-overlay" id="m-ch">
   <div class="modal">
     <div class="modal-header">
@@ -470,15 +422,13 @@
     <div class="info-box">أرسل رابط قناتك وستصلنا عبر Discord للمراجعة والإضافة ✨</div>
     <div class="form-group">
       <label class="form-label">رابط القناة</label>
-      <input class="form-input" id="ch-url" placeholder="https://kick.com/username" dir="ltr">
+      <input class="form-input" id="ch-url" placeholder="https://twitch.tv/username" dir="ltr">
     </div>
     <div class="form-group">
       <label class="form-label">المنصة</label>
       <select class="form-select" id="ch-plat">
-        <option value="kick">Kick</option>
-        <option value="twitch">Twitch</option>
-        <option value="youtube">YouTube</option>
-        <option value="other">أخرى</option>
+        <option value="twitch">Twitch</option><option value="youtube">YouTube</option>
+        <option value="kick">Kick</option><option value="other">أخرى</option>
       </select>
     </div>
     <button class="btn-primary" onclick="submitChannel()">📤 إرسال الطلب</button>
@@ -503,48 +453,16 @@
       <div class="modal-title">➕ إضافة ستريمر</div>
       <button class="modal-close" onclick="close_('m-add')">✕</button>
     </div>
-
-    <div class="form-group">
-      <label class="form-label">اسم الشخص</label>
-      <input class="form-input" id="ns-name" placeholder="اسم الستريمر">
-    </div>
-
+    <div class="form-group"><label class="form-label">اسم الشخص</label><input class="form-input" id="ns-name" placeholder="اسم الستريمر"></div>
+    <div class="form-group"><label class="form-label">رابط القناة</label><input class="form-input" id="ns-url" placeholder="https://twitch.tv/..." dir="ltr"></div>
+    <div class="form-group"><label class="form-label">رابط صورة البروفايل (اختياري)</label><input class="form-input" id="ns-av" placeholder="https://..." dir="ltr"></div>
     <div class="form-group">
       <label class="form-label">المنصة</label>
-      <select class="form-select" id="ns-plat" onchange="onPlatChange()">
-        <option value="kick">Kick ✅ (تلقائي)</option>
-        <option value="twitch">Twitch</option>
-        <option value="youtube">YouTube</option>
-        <option value="other">أخرى</option>
+      <select class="form-select" id="ns-plat">
+        <option value="twitch">Twitch</option><option value="youtube">YouTube</option>
+        <option value="kick">Kick</option><option value="other">أخرى</option>
       </select>
     </div>
-
-    <!-- Kick: username field (auto builds URL + auto status) -->
-    <div id="kick-fields">
-      <div class="form-group">
-        <label class="form-label">اسم المستخدم على Kick</label>
-        <input class="form-input" id="ns-kick-user" placeholder="مثال: shroud" dir="ltr" oninput="previewKickUrl()">
-        <div class="form-hint kick-hint" id="kick-url-preview">🔗 kick.com/...</div>
-      </div>
-      <div class="kick-info-box">
-        🟢 <strong>تلقائي تماماً!</strong> — يتم فحص حالة البث كل دقيقة مباشرة من Kick API
-        <br>لا تحتاج لتغيير الحالة يدوياً ✅
-      </div>
-    </div>
-
-    <!-- Non-Kick: manual URL -->
-    <div id="manual-fields" style="display:none">
-      <div class="form-group">
-        <label class="form-label">رابط القناة</label>
-        <input class="form-input" id="ns-url" placeholder="https://twitch.tv/..." dir="ltr">
-      </div>
-    </div>
-
-    <div class="form-group" style="margin-top:6px">
-      <label class="form-label">رابط صورة البروفايل (اختياري)</label>
-      <input class="form-input" id="ns-av" placeholder="https://..." dir="ltr">
-    </div>
-
     <button class="btn-primary" onclick="confirmAdd()">✅ تأكيد الإضافة</button>
     <button class="btn-secondary" onclick="close_('m-add')">إلغاء</button>
   </div>
@@ -566,12 +484,6 @@
     </div>
     <div id="adm-content" style="display:none">
       <div class="info-box">✅ مرحباً أيها المشرف!</div>
-
-      <!-- Manual refresh Kick -->
-      <button class="btn-secondary" style="margin-bottom:14px;border-color:rgba(83,252,0,0.25);color:#6fff40" onclick="kickPollAll(true)">
-        🟢 تحديث Kick يدوياً الآن
-      </button>
-
       <button class="btn-primary" style="margin-bottom:14px" onclick="close_('m-admin');open_('m-add')">➕ إضافة ستريمر جديد</button>
 
       <div style="height:1px;background:rgba(139,92,246,0.1);margin:16px 0"></div>
@@ -620,37 +532,20 @@
   </div>
 </div>
 
-<!-- ============================================================ -->
-<!--  JAVASCRIPT                                                   -->
-<!-- ============================================================ -->
 <script>
-/* ───────── Storage Keys ───────── */
 const K_STR='rgs_streamers',K_LB='rgs_lb',K_ADM='rgs_adminId',K_FAV='rgs_fav',K_IMGS='rgs_gangimgs';
 const WEBHOOK='https://discord.com/api/webhooks/1457668188128149663/Dm8KkDE8_K4gAN8nUOWm_4puSbDoNJ41ELi6yRcy6dPKgzKPrQjKMYYQKQXD7yeSZjdY';
 
-/* ───────── Kick API config ───────── */
-// allorigins proxy — wraps Kick's unofficial public API
-const KICK_API = u=>`https://api.allorigins.win/get?url=${encodeURIComponent('https://kick.com/api/v1/channels/'+u)}`;
-const KICK_POLL_INTERVAL = 60; // seconds between polls
-
-let kickCountdown = KICK_POLL_INTERVAL;
-let kickTimer = null;
-
-/* ───────── Helpers ───────── */
 const lsGet=(k,fb=null)=>{try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):fb;}catch{return fb;}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
 
 let streamers=[],lb={r1:{n:'',d:''},r2:{n:'',d:''},r3:{n:'',d:''}};
 let adminId='vel123',filter='all',currentNav='all',favorites=[],gangImages=[];
 
-/* ───────── Boot ───────── */
-window.onload=async()=>{
+window.onload=()=>{
   loadData();
   document.getElementById('loading-screen').style.display='none';
   setNav('all',true);
-  // Initial Kick poll then start interval
-  await kickPollAll(false);
-  startKickTimer();
 };
 
 function loadData(){
@@ -669,102 +564,6 @@ const saveAdm=()=>lsSet(K_ADM,adminId);
 const saveFav=()=>lsSet(K_FAV,favorites);
 const saveImgs=()=>lsSet(K_IMGS,gangImages);
 
-/* ───────── Kick API Polling ───────── */
-/**
- * Fetches live status for a single Kick username.
- * Returns { online, viewers, streamTitle, avatarUrl } or null on error.
- */
-async function fetchKickStatus(username){
-  try{
-    const res=await fetch(KICK_API(username.toLowerCase()),{signal:AbortSignal.timeout(8000)});
-    if(!res.ok)return null;
-    const wrapper=await res.json();
-    if(!wrapper.contents)return null;
-    const data=JSON.parse(wrapper.contents);
-    // data.livestream is null when offline
-    const live=data.livestream;
-    const online=live!==null&&live!==undefined;
-    const viewers=online?(live.viewer_count||0):0;
-    const streamTitle=online?(live.session_title||''):'' ;
-    // Kick provides profile pic in data.user.profile_pic
-    const avatarUrl=data.user?.profile_pic||null;
-    return {online,viewers,streamTitle,avatarUrl};
-  }catch(e){
-    return null;
-  }
-}
-
-/**
- * Polls all Kick streamers and updates their online/viewer data.
- */
-async function kickPollAll(manual=false){
-  const kickStreamers=streamers.filter(s=>s.platform==='kick'&&s.kickUsername);
-  if(!kickStreamers.length){
-    setApiStatus('idle');
-    return;
-  }
-  setApiStatus('polling');
-  if(manual)toast('🔄 جارٍ تحديث Kick...','kick');
-
-  let anyChanged=false;
-  await Promise.all(kickStreamers.map(async s=>{
-    const res=await fetchKickStatus(s.kickUsername);
-    if(res===null)return; // skip on error
-    const wasOnline=s.online;
-    const oldViewers=s.viewers;
-    s.online=res.online;
-    s.viewers=res.viewers;
-    s.streamTitle=res.streamTitle||'';
-    // Auto-update avatar from Kick if we don't have one set manually
-    if(!s.avatarManual&&res.avatarUrl)s.avatar=res.avatarUrl;
-    if(wasOnline!==s.online||oldViewers!==s.viewers)anyChanged=true;
-    // Notify on status change
-    if(wasOnline!==s.online){
-      if(s.online)toast(`🟢 ${s.name} بدأ البث على Kick!`,'kick');
-      else toast(`⚫ ${s.name} أنهى البث`,'error');
-    }
-  }));
-
-  if(anyChanged){saveStr();render();stats();}
-  setApiStatus('active');
-  if(manual)toast('✅ تم تحديث Kick','success');
-}
-
-function startKickTimer(){
-  kickCountdown=KICK_POLL_INTERVAL;
-  updateCountdown();
-  kickTimer=setInterval(async()=>{
-    kickCountdown--;
-    updateCountdown();
-    if(kickCountdown<=0){
-      kickCountdown=KICK_POLL_INTERVAL;
-      await kickPollAll(false);
-    }
-  },1000);
-}
-
-function updateCountdown(){
-  const haKick=streamers.some(s=>s.platform==='kick'&&s.kickUsername);
-  const badge=document.getElementById('refresh-badge');
-  const sec=document.getElementById('countdown-sec');
-  if(haKick){
-    badge.style.display='flex';
-    if(sec)sec.textContent=kickCountdown+'';
-  }else{
-    badge.style.display='none';
-  }
-}
-
-function setApiStatus(state){
-  const el=document.getElementById('kick-api-status');
-  const lbl=document.getElementById('kick-api-label');
-  el.className='kick-api-status';
-  if(state==='active'){el.classList.add('active');lbl.textContent='Kick Live ✓';}
-  else if(state==='polling'){lbl.textContent='Kick جارٍ...';}
-  else{lbl.textContent='Kick API';}
-}
-
-/* ───────── Render ───────── */
 function render(){
   const grid=document.getElementById('grid');
   grid.innerHTML='';
@@ -781,21 +580,11 @@ function render(){
   }
   list.forEach((s,i)=>{
     const isFav=favorites.includes(s.id);
-    const isKick=s.platform==='kick';
     const card=document.createElement('div');
     card.className=`streamer-card${s.online?' is-online':''}`;
     card.style.animationDelay=`${i*0.05}s`;
-    const avClass=`avatar${s.online?(isKick?' kick-online-border':' online-border'):''}`;
     const avInner=s.avatar?`<img src="${s.avatar}" alt="${s.name}" onerror="this.style.display='none'">`:`<span>${pEmoji(s.platform)}</span>`;
-    const viewersHtml=s.online&&s.viewers>0
-      ?`<div class="viewers-count">👁️ <span class="online-viewers${isKick?' kick-viewers':''}">${Number(s.viewers).toLocaleString()}</span> مشاهد</div>`
-      :'';
-    const titleHtml=isKick&&s.online&&s.streamTitle
-      ?`<div class="stream-title-mini">${s.streamTitle}</div>`:'';
-    const visitCls=`visit-btn${isKick?' kick-btn':''}`;
-    const liveBadge=isKick?`<div class="kick-live-badge kick-card">● LIVE</div>`:'';
     card.innerHTML=`
-      ${liveBadge}
       <div class="card-header">
         <span class="platform-badge ${s.platform}">${s.platform.toUpperCase()}</span>
         <div class="header-actions">
@@ -805,12 +594,11 @@ function render(){
       <div class="card-body">
         <div class="streamer-name">${s.name}</div>
         <div class="status-badge ${s.online?'online':'offline'}">
-          <div class="status-dot"></div>${s.online?(isKick?'🟢 يبث على Kick':'متصل'):'غير متصل'}
+          <div class="status-dot"></div>${s.online?'متصل':'غير متصل'}
         </div>
-        <div class="${avClass}">${avInner}</div>
-        ${viewersHtml}
-        ${titleHtml}
-        <button class="${visitCls}" onclick="visit('${s.url}')">🔗 زيارة القناة</button>
+        <div class="avatar ${s.online?'online-border':''}">${avInner}</div>
+        ${s.online&&s.viewers>0?`<div class="viewers-count">👁️ <span class="online-viewers">${Number(s.viewers).toLocaleString()}</span> مشاهد</div>`:''}
+        <button class="visit-btn" onclick="visit('${s.url}')">🔗 زيارة القناة</button>
       </div>`;
     grid.appendChild(card);
   });
@@ -828,19 +616,6 @@ function stats(){
   document.getElementById('s-vsub').textContent=vw>0?'مشاهد نشط ✨':'';
 }
 
-/* ───────── Form: platform change ───────── */
-function onPlatChange(){
-  const plat=document.getElementById('ns-plat').value;
-  document.getElementById('kick-fields').style.display=plat==='kick'?'block':'none';
-  document.getElementById('manual-fields').style.display=plat!=='kick'?'block':'none';
-}
-
-function previewKickUrl(){
-  const u=document.getElementById('ns-kick-user').value.trim();
-  document.getElementById('kick-url-preview').textContent=u?`🔗 kick.com/${u}`:'🔗 kick.com/...';
-}
-
-/* ───────── Nav / Filter ───────── */
 function setFilter(f,btn){
   filter=f;
   document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
@@ -856,7 +631,6 @@ function setNav(sec,skip=false){
   currentNav=sec;render();stats();
 }
 
-/* ───────── Favorites ───────── */
 function toggleFav(id,btn){
   const i=favorites.indexOf(id);
   if(i===-1){favorites.push(id);btn.textContent='⭐';btn.classList.add('active');toast('✅ أضيف للمفضلة','success');}
@@ -866,7 +640,6 @@ function toggleFav(id,btn){
 
 function visit(url){if(!url||url==='#')return toast('لا يوجد رابط','error');window.open(url,'_blank');}
 
-/* ───────── Delete Streamer ───────── */
 function delStr(id){
   if(!confirm('هل أنت متأكد من حذف هذا الستريمر نهائياً؟'))return;
   streamers=streamers.filter(s=>s.id!==id);
@@ -875,57 +648,18 @@ function delStr(id){
   toast('🗑️ تم الحذف','error');
 }
 
-/* ───────── Add Streamer ───────── */
-async function confirmAdd(){
+function confirmAdd(){
   const name=document.getElementById('ns-name').value.trim();
-  const plat=document.getElementById('ns-plat').value;
+  const url=document.getElementById('ns-url').value.trim();
   const av=document.getElementById('ns-av').value.trim();
-
-  if(!name)return toast('⚠️ أدخل الاسم','error');
-
-  let url,kickUsername='';
-
-  if(plat==='kick'){
-    kickUsername=document.getElementById('ns-kick-user').value.trim().toLowerCase();
-    if(!kickUsername)return toast('⚠️ أدخل اسم المستخدم على Kick','error');
-    url=`https://kick.com/${kickUsername}`;
-  }else{
-    url=document.getElementById('ns-url').value.trim();
-    if(!url)return toast('⚠️ أدخل رابط القناة','error');
-  }
-
-  const newS={
-    id:Date.now(),name,url,avatar:av,platform:plat,
-    online:false,viewers:0,streamTitle:'',
-    kickUsername:plat==='kick'?kickUsername:'',
-    avatarManual:!!av
-  };
-  streamers.push(newS);
-  saveStr();
-  close_('m-add');
-  render();stats();renderAdmList();
+  const plat=document.getElementById('ns-plat').value;
+  if(!name||!url)return toast('⚠️ أدخل الاسم والرابط','error');
+  streamers.push({id:Date.now(),name,url,avatar:av,platform:plat,online:false,viewers:0});
+  saveStr();close_('m-add');render();stats();renderAdmList();
   toast(`✅ تم إضافة ${name}`,'success');
-
-  // Immediately fetch Kick status if it's a Kick streamer
-  if(plat==='kick'){
-    toast('🔄 جارٍ جلب حالة Kick...','kick');
-    const res=await fetchKickStatus(kickUsername);
-    if(res){
-      const s=streamers.find(x=>x.id===newS.id);
-      if(s){
-        s.online=res.online;s.viewers=res.viewers;s.streamTitle=res.streamTitle||'';
-        if(!s.avatarManual&&res.avatarUrl)s.avatar=res.avatarUrl;
-        saveStr();render();stats();
-        toast(s.online?`🟢 ${name} يبث الآن!`:`⚫ ${name} غير متصل حالياً`,'kick');
-      }
-    }
-  }
-
-  ['ns-name','ns-url','ns-av','ns-kick-user'].forEach(k=>{const e=document.getElementById(k);if(e)e.value='';});
-  document.getElementById('kick-url-preview').textContent='🔗 kick.com/...';
+  ['ns-name','ns-url','ns-av'].forEach(k=>document.getElementById(k).value='');
 }
 
-/* ───────── Submit Channel Request ───────── */
 async function submitChannel(){
   const url=document.getElementById('ch-url').value.trim();
   const plat=document.getElementById('ch-plat').value;
@@ -935,7 +669,6 @@ async function submitChannel(){
   close_('m-ch');toast('📤 تم إرسال طلبك!','success');
 }
 
-/* ───────── Leaderboard ───────── */
 function renderLb(){
   const ranks=[{k:'r1',lbl:'المركز الأول',em:'🥇',cls:'rank-1'},{k:'r2',lbl:'المركز الثاني',em:'🥈',cls:'rank-2'},{k:'r3',lbl:'المركز الثالث',em:'🥉',cls:'rank-3'}];
   document.getElementById('lb-view').innerHTML=ranks.map(r=>`
@@ -954,7 +687,6 @@ function saveLb(){
   saveLbD();renderLb();toast('💾 تم حفظ المراتب','success');
 }
 
-/* ───────── Admin ───────── */
 function openAdmin(){
   document.getElementById('adm-login').style.display='block';
   document.getElementById('adm-content').style.display='none';
@@ -981,34 +713,26 @@ function renderAdmList(){
   const el=document.getElementById('adm-list');
   if(!el)return;
   if(!streamers.length){el.innerHTML=`<div style="text-align:center;color:var(--text2);font-size:13px;padding:16px">لا يوجد ستريمرز</div>`;return;}
-  el.innerHTML=streamers.map(s=>{
-    const isKick=s.platform==='kick';
-    const statusEl=isKick
-      ?`<span class="toggle-btn kick-auto">🟢 تلقائي</span>`
-      :`<button class="toggle-btn ${s.online?'online':'offline'}" onclick="toggleOnline(${s.id})">${s.online?'🟢 متصل':'⚫ غير متصل'}</button>`;
-    return `<div class="admin-item">
-      ${isKick?'<div class="admin-kick-dot"></div>':''}
+  el.innerHTML=streamers.map(s=>`
+    <div class="admin-item">
       <span>${pEmoji(s.platform)}</span>
-      <span class="admin-item-name">${s.name}${isKick?` <small style="font-size:10px;color:var(--text3)">(${s.kickUsername})</small>`:''}</span>
-      ${statusEl}
+      <span class="admin-item-name">${s.name}</span>
+      <button class="toggle-btn ${s.online?'online':'offline'}" onclick="toggleOnline(${s.id})">${s.online?'🟢 متصل':'⚫ غير متصل'}</button>
       <button class="delete-btn" onclick="delStr(${s.id})">🗑️</button>
-    </div>`;
-  }).join('');
+    </div>`).join('');
   ['r1','r2','r3'].forEach(k=>{
     const n=document.getElementById(k+'n');const d=document.getElementById(k+'d');
     if(n)n.value=lb[k]?.n||'';if(d)d.value=lb[k]?.d||'';
   });
 }
 
-/* Manual toggle only for non-Kick streamers */
 function toggleOnline(id){
-  const s=streamers.find(x=>x.id===id);if(!s||s.platform==='kick')return;
+  const s=streamers.find(x=>x.id===id);if(!s)return;
   s.online=!s.online;s.viewers=s.online?Math.floor(Math.random()*2000)+50:0;
   saveStr();render();stats();renderAdmList();
   toast(s.online?`🟢 ${s.name} متصل الآن`:`⚫ ${s.name} غير متصل`,s.online?'success':'error');
 }
 
-/* ───────── Gang Images ───────── */
 function addGangImage(){
   const url=document.getElementById('gi-url').value.trim();
   const label=document.getElementById('gi-label').value.trim();
@@ -1018,7 +742,8 @@ function addGangImage(){
   saveImgs();
   document.getElementById('gi-url').value='';
   document.getElementById('gi-label').value='';
-  renderGangImages();renderAdmGangList();
+  renderGangImages();
+  renderAdmGangList();
   toast('✅ تم إضافة الصورة','success');
 }
 
@@ -1081,7 +806,6 @@ function switchGangsTab(tab,btn){
   document.getElementById(`tab-${tab}`).classList.add('active');
 }
 
-/* ───────── Modal helpers ───────── */
 const open_=id=>document.getElementById(id).classList.add('open');
 const close_=id=>document.getElementById(id).classList.remove('open');
 document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});});
@@ -1092,12 +816,23 @@ document.addEventListener('keydown',e=>{
   }
 });
 
-/* ───────── Toast ───────── */
 function toast(msg,type='success'){
   const c=document.getElementById('toasts'),t=document.createElement('div');
   t.className=`toast ${type}`;t.textContent=msg;
   c.appendChild(t);setTimeout(()=>t.remove(),3000);
 }
+
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyD9xTrB4c6n9Y4DsVTYEYkRl_1ktVN_Hkc",
+  authDomain: "respect-gang.firebaseapp.com",
+  projectId: "respect-gang",
+  storageBucket: "respect-gang.firebasestorage.app",
+  messagingSenderId: "293595223902",
+  appId: "1:293595223902:web:213b3c2897b405dbeaa1cf",
+  measurementId: "G-CMXQRRQETG"
+};
+
 </script>
 </body>
 </html>
