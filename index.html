@@ -33,7 +33,31 @@ let currentNav = 'all';
 let favorites = [];
 let gangImages = [];
 
-// ===== localStorage helpers (for favorites & admin password only) =====
+// ===== Kick Auto-Check =====
+const KICK_PROXY = 'https://kick-proxy.ahmadalherz456.workers.dev';
+let kickCheckInterval = null;
+
+async function checkKickStreamers() {
+  const kickStreamers = streamers.filter(s => s.platform === 'kick');
+  if (!kickStreamers.length) return;
+
+  for (const s of kickStreamers) {
+    const username = s.url.replace(/\/$/, '').split('/').pop();
+    try {
+      const res = await fetch(`${KICK_PROXY}?username=${username}`);
+      const data = await res.json();
+      // حدّث Firebase فقط إذا تغيرت الحالة أو عدد المشاهدين
+      if (data.online !== s.online || data.viewers !== s.viewers) {
+        await fsToggleOnline(s.id, data.online, data.viewers);
+        console.log(`✅ Kick ${username}: ${data.online ? '🟢' : '⚫'} ${data.viewers} viewers`);
+      }
+    } catch(e) {
+      console.error(`❌ Kick check error for ${username}:`, e);
+    }
+  }
+}
+
+// ===== localStorage helpers =====
 const lsGet = (k, fb=null) => { try { const v=localStorage.getItem(k); return v!==null?JSON.parse(v):fb; } catch { return fb; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k,JSON.stringify(v)); } catch {} };
 
@@ -63,6 +87,12 @@ function startListeners() {
     renderGangImages();
     if (document.getElementById('adm-content').style.display !== 'none') renderAdmGangList();
   });
+
+  // ✅ Kick Auto-Check: شغّل بعد 4 ثواني من تحميل البيانات، ثم كل دقيقتين
+  setTimeout(() => {
+    checkKickStreamers();
+    kickCheckInterval = setInterval(checkKickStreamers, 2 * 60 * 1000);
+  }, 4000);
 }
 
 // ===== Firestore write helpers =====
@@ -159,6 +189,7 @@ function renderAdmList() {
     <div class="admin-item">
       <span>${pEmoji(s.platform)}</span>
       <span class="admin-item-name">${s.name}</span>
+      ${s.platform==='kick'?'<span style="font-size:10px;color:#6fff40;border:1px solid rgba(83,252,0,0.2);border-radius:5px;padding:2px 6px">🔄 تلقائي</span>':''}
       <button class="toggle-btn ${s.online?'online':'offline'}" onclick="window.toggleOnline('${s.id}')">${s.online?'🟢 متصل':'⚫ غير متصل'}</button>
       <button class="delete-btn" onclick="window.delStr('${s.id}')">🗑️</button>
     </div>`).join('');
@@ -244,6 +275,11 @@ window.delStr = async id => {
 window.toggleOnline = async id => {
   const s = streamers.find(x => x.id===id);
   if (!s) return;
+  // تنبيه للستريمرز الـ Kick أنها تلقائية
+  if (s.platform === 'kick') {
+    toast('⚠️ Kick يُحدَّث تلقائياً كل دقيقتين', 'error');
+    return;
+  }
   const newOnline = !s.online;
   const newViewers = newOnline ? Math.floor(Math.random()*2000)+50 : 0;
   try {
@@ -263,6 +299,8 @@ window.confirmAdd = async () => {
     close_('m-add');
     toast(`✅ تم إضافة ${name}`,'success');
     ['ns-name','ns-url','ns-av'].forEach(k => document.getElementById(k).value='');
+    // شغّل الفحص فوراً إذا كان Kick
+    if (plat === 'kick') setTimeout(checkKickStreamers, 2000);
   } catch(e) { toast('❌ خطأ في الإضافة','error'); console.error(e); }
 };
 
@@ -659,7 +697,6 @@ window.addEventListener('DOMContentLoaded', () => {
   .empty-gangs-icon{font-size:48px;opacity:0.2;margin-bottom:12px;}
   .empty-gangs-text{font-size:13px;line-height:1.8;opacity:0.6;}
 
-  /* Firebase status indicator */
   .fb-status{position:fixed;top:12px;left:12px;z-index:9000;font-size:10px;font-weight:900;
     padding:4px 10px;border-radius:20px;letter-spacing:0.5px;transition:all 0.3s;}
   .fb-status.connected{background:rgba(34,197,94,0.12);color:var(--online);border:1px solid rgba(34,197,94,0.25);}
@@ -682,7 +719,6 @@ window.addEventListener('DOMContentLoaded', () => {
 <body>
 <div class="bg-wrap"></div>
 
-<!-- Firebase connection status -->
 <div class="fb-status connecting" id="fb-status">🔄 جارٍ الاتصال...</div>
 
 <div id="loading-screen">
@@ -771,15 +807,11 @@ window.addEventListener('DOMContentLoaded', () => {
   <div class="gangs-content">
     <div class="gangs-section active" id="tab-locations">
       <div class="gangs-section-title">📍 المقرات والأماكن</div>
-      <div class="gangs-grid" id="grid-locations">
-        <div class="empty-gangs"><div class="empty-gangs-icon">📍</div><div class="empty-gangs-text">لا توجد صور بعد<br>أضف صور المقرات من لوحة الإدارة</div></div>
-      </div>
+      <div class="gangs-grid" id="grid-locations"></div>
     </div>
     <div class="gangs-section" id="tab-outfits">
       <div class="gangs-section-title">👕 الأطقم والملابس</div>
-      <div class="gangs-grid" id="grid-outfits">
-        <div class="empty-gangs"><div class="empty-gangs-icon">👕</div><div class="empty-gangs-text">لا توجد صور بعد<br>أضف صور الأطقم من لوحة الإدارة</div></div>
-      </div>
+      <div class="gangs-grid" id="grid-outfits"></div>
     </div>
   </div>
 </div>
@@ -855,7 +887,7 @@ window.addEventListener('DOMContentLoaded', () => {
       <button class="btn-primary" onclick="verifyAdmin()">🔓 دخول</button>
     </div>
     <div id="adm-content" style="display:none">
-      <div class="info-box">✅ مرحباً أيها المشرف! — البيانات تُحفظ مباشرة لجميع المستخدمين 🌐</div>
+      <div class="info-box">✅ مرحباً أيها المشرف! — البيانات تُحفظ مباشرة لجميع المستخدمين 🌐<br>🟢 Kick يُحدَّث تلقائياً كل دقيقتين</div>
       <button class="btn-primary" style="margin-bottom:14px" onclick="close_('m-admin');open_('m-add')">➕ إضافة ستريمر جديد</button>
 
       <div style="height:1px;background:rgba(139,92,246,0.1);margin:16px 0"></div>
@@ -905,11 +937,9 @@ window.addEventListener('DOMContentLoaded', () => {
 </div>
 
 <script>
-// Show Firebase connected status once listeners fire
 setTimeout(()=>{
   const s=document.getElementById('fb-status');
   if(s){s.className='fb-status connected';s.textContent='🟢 متصل بقاعدة البيانات';}
-  // Hide after 4s
   setTimeout(()=>{if(s)s.style.opacity='0';},4000);
   setTimeout(()=>{if(s)s.style.display='none';},4500);
 },2000);
